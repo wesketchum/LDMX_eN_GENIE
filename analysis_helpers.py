@@ -1,6 +1,27 @@
 #!/usr/bin/env python3
 
-import ROOT
+import os,sys
+sys.path.append("./")
+from analysis_common import *
+from root_common import *
+
+LEPTON_PT_TRIGGER = 0.4 #GeV
+
+RTRACKER_ACCEPT_P = 0.05 #GeV, From Snowmass White Paper
+RTRACKER_ACCEPT_ANGLE = radians(40)
+
+#49cm is roughly the height (width is 51 CM), 24 cm from target to front face, from gdml v13
+ECAL_MAXDET_ANGLE = ROOT.TMath.ATan2(49./2.,24.0) 
+
+#3.1x3.1 m height/width at same position to target from front face, from gdml v13
+HCAL_MAXDET_ANGLE = ROOT.TMath.ATan2(310./2.,24.0)
+
+ECAL_ACCEPT_ANGLE = radians(40)
+HCAL_ACCEPT_ANGLE = radians(65)
+
+ELECTRON_ACCEPT_KE = 0.06
+CHPION_ACCEPT_KE = 0.06
+PROTON_ACCEPT_KE = 0.06
 
 def create_gst_chain(files,verbose=False):
     gst_chain = ROOT.TChain("gst")
@@ -9,3 +30,209 @@ def create_gst_chain(files,verbose=False):
     if(verbose):
         print(f'Created gst chain from {len(files)} files with {gst_chain.GetEntries()} total events.')
     return gst_chain
+
+
+getP4vec_code='''
+using namespace ROOT::VecOps;
+RVec<TLorentzVector> getP4vec(const RVec<double> &vpx,const RVec<double> &vpy,const RVec<double> &vpz,const RVec<double> &ve)
+{
+   auto p_4vec = [](const double &px,const double &py,const double &pz,const double &e)
+   { return TLorentzVector(px,py,pz,e); };
+   return Map(vpx,vpy,vpz,ve,p_4vec);
+}
+'''
+
+ROOT.gInterpreter.Declare(getP4vec_code)
+
+decayPi0_photon1_code='''
+TRandom PI0_DECAY_RAND(100);
+const double PI0_DECAY_E_PHOTON = 0.1395704*0.5;
+using namespace ROOT::VecOps;
+using namespace ROOT::Math;
+RVec<TLorentzVector> decayPi0_photon1(const RVec<double> &vpx,const RVec<double> &vpy,const RVec<double> &vpz,const RVec<double> &ve)
+{
+
+   auto photon1_4vec = [](const double& px, const double& py, const double& pz, const double& e)
+   {
+      TLorentzVector pi0_4vec = TLorentzVector(px,py,pz,e);
+      //photon1 cos_theta and phi
+      double cos_theta = 2.*PI0_DECAY_RAND.Uniform(0,1)-1.;
+      double sin_theta = sqrt(1.-cos_theta*cos_theta);
+      double phi = 2*Pi()*PI0_DECAY_RAND.Uniform(0,1);
+   
+      auto photon1_4vec = TLorentzVector(PI0_DECAY_E_PHOTON*sin_theta*cos(phi),
+                                         PI0_DECAY_E_PHOTON*sin_theta*sin(phi),
+                                         PI0_DECAY_E_PHOTON*cos_theta,
+                                         PI0_DECAY_E_PHOTON);
+      photon1_4vec.Boost(pi0_4vec.BoostVector());
+      return photon1_4vec;
+   };
+   return Map(vpx,vpy,vpz,ve,photon1_4vec);
+}
+'''
+ROOT.gInterpreter.Declare(decayPi0_photon1_code)
+
+decayPi0_photon2_code='''
+using namespace ROOT::VecOps;
+RVec<TLorentzVector> decayPi0_photon2(const RVec<double> &vpx,const RVec<double> &vpy,const RVec<double> &vpz,const RVec<double> &ve, const RVec<double> &ph1px, const RVec<double> &ph1py, const RVec<double> &ph1pz, const RVec<double> &ph1e)
+{
+   auto photon2_4vec = [](const double& px, const double& py, const double& pz, const double& e, const double& px1, const double& py1, const double& pz1, const double& e1)
+   { return TLorentzVector(px,py,pz,e)-TLorentzVector(px1,py1,pz1,e1); };
+   return Map(vpx,vpy,vpz,ve,ph1px,ph1py,ph1pz,ph1e,photon2_4vec);
+}
+'''
+ROOT.gInterpreter.Declare(decayPi0_photon2_code)
+
+getPx_code='''
+using namespace ROOT::VecOps;
+RVec<double> getPx(const RVec<TLorentzVector> &p4vec)
+{
+   auto px = [](const TLorentzVector &p4vec)
+   { return p4vec.Px(); };
+   return Map(p4vec,px);
+}
+'''
+getPy_code='''
+using namespace ROOT::VecOps;
+RVec<double> getPy(const RVec<TLorentzVector> &p4vec)
+{
+   auto py = [](const TLorentzVector &p4vec)
+   { return p4vec.Py(); };
+   return Map(p4vec,py);
+}
+'''
+getPz_code='''
+using namespace ROOT::VecOps;
+RVec<double> getPz(const RVec<TLorentzVector> &p4vec)
+{
+   auto pz = [](const TLorentzVector &p4vec)
+   { return p4vec.Pz(); };
+   return Map(p4vec,pz);
+}
+'''
+getE_code='''
+using namespace ROOT::VecOps;
+RVec<double> getE(const RVec<TLorentzVector> &p4vec)
+{
+   auto e = [](const TLorentzVector &p4vec)
+   { return p4vec.E(); };
+   return Map(p4vec,e);
+}
+'''
+ROOT.gInterpreter.Declare(getPx_code)
+ROOT.gInterpreter.Declare(getPy_code)
+ROOT.gInterpreter.Declare(getPz_code)
+ROOT.gInterpreter.Declare(getE_code)
+
+
+
+#define a function that makes new lepton variables
+def define_df_gst_lep_vars(df_gst):
+    df_gst = df_gst.Define("ptl","sqrt(pxl*pxl+pyl*pyl)") #pt lepton
+    df_gst = df_gst.Define("thetazl","atan2(ptl,pzl)") #theta_z of lepton
+    df_gst = df_gst.Define("energy_transfer","Ev-El")
+    df_gst = df_gst.Define("pv","sqrt(pxv*pxv+pyv*pyv+pzv*pzv)")
+    return df_gst
+
+#define a function to make a bunch of hadron related variables
+#sfx is the suffix on the vars (initial, final)
+def define_df_gst_hadron_vars(df_gst,sfx=["i","f"]):
+    
+    for s in sfx:
+        
+        df_gst = df_gst.Define(f"thetaxz{s}",f"atan2(px{s},pz{s})")
+        df_gst = df_gst.Define(f"thetayz{s}",f"atan2(py{s},pz{s})")
+        df_gst = df_gst.Define(f"pt{s}",f"sqrt(px{s}*px{s}+py{s}*py{s})")
+        df_gst = df_gst.Define(f"thetaz{s}",f"atan2(pt{s},pz{s})")
+        
+        #note, only for 'i' is total momentum not already in the gst tree
+        if s=="i":
+            df_gst = df_gst.Define(f"p{s}",f"sqrt(px{s}*px{s}+py{s}+py{s}+pz{s}*pz{s})")
+            
+        df_gst = df_gst.Define(f"mass{s}",f"sqrt(E{s}*E{s}-p{s}*p{s})")
+        df_gst = df_gst.Define(f"ke{s}",f"E{s}-mass{s}")
+        
+        #for the hadrons, get the indices sorted by KE
+        #df_gst = df_gst.Define(f"idx_ke{s}",f"Reverse(Argsort(ke{s}))")
+    
+    return df_gst
+
+
+def define_df_gst_hadrons_by_pdg(df_gst,
+                                 hvars=["E","p","px","py","pz",
+                                        "pt","mass","ke",
+                                        "thetaxz","thetayz","thetaz"],
+                                 sfx=["f","i"]):
+    
+    particle_dict = { "proton":[2212,-2212],
+                      "neutron":[2112,-2112],
+                      "piplus":[211],
+                      "piminus":[-211],
+                      "pi0":[111],
+                      "K0":[311,-311],
+                      "Kplus":[321],
+                      "Kminus":[-321] }
+    
+    for s in sfx:
+        hvars_sfx = [ f'{hv}{s}' for hv in hvars ]
+        for pname,pdgcodes in particle_dict.items():
+            pdgstr=''
+            for pdgcode in pdgcodes:
+                if len(pdgstr)==0:
+                    pdgstr+=f'pdg{s}=={pdgcode}'
+                else:
+                    pdgstr+=f'||pdg{s}=={pdgcode}'
+            
+            for hv in hvars_sfx:
+                df_gst = df_gst.Define(f'{hv}_{pname}',f'{hv}[{pdgstr}]')        
+                
+    return df_gst
+
+def define_df_gst_pi0decay(df_gst):
+    df_gst = df_gst.Define("p4vec_pi0_ph1","decayPi0_photon1(pxf_pi0,pyf_pi0,pzf_pi0,Ef_pi0)")
+    df_gst = df_gst.Define("pxf_pi0_ph1","getPx(p4vec_pi0_ph1)")
+    df_gst = df_gst.Define("pyf_pi0_ph1","getPy(p4vec_pi0_ph1)")
+    df_gst = df_gst.Define("pzf_pi0_ph1","getPz(p4vec_pi0_ph1)")
+    df_gst = df_gst.Define("Ef_pi0_ph1","getE(p4vec_pi0_ph1)")
+    df_gst = df_gst.Define("p4vec_pi0_ph2",
+                           "decayPi0_photon2(pxf_pi0,pyf_pi0,pzf_pi0,Ef_pi0,pxf_pi0_ph1,pyf_pi0_ph1,pzf_pi0_ph1,Ef_pi0_ph1)")
+    df_gst = df_gst.Define("pxf_pi0_ph2","getPx(p4vec_pi0_ph2)")
+    df_gst = df_gst.Define("pyf_pi0_ph2","getPy(p4vec_pi0_ph2)")
+    df_gst = df_gst.Define("pzf_pi0_ph2","getPz(p4vec_pi0_ph2)")
+    df_gst = df_gst.Define("Ef_pi0_ph2","getE(p4vec_pi0_ph2)")
+    
+    df_gst = df_gst.Define("ptf_pi0_ph1","sqrt(pxf_pi0_ph1*pxf_pi0_ph1+pyf_pi0_ph1*pyf_pi0_ph1)")
+    df_gst = df_gst.Define("ptf_pi0_ph2","sqrt(pxf_pi0_ph2*pxf_pi0_ph2+pyf_pi0_ph2*pyf_pi0_ph2)")
+    
+    df_gst = df_gst.Define("thetazf_pi0_ph1","atan2(ptf_pi0_ph1,pzf_pi0_ph1)")
+    df_gst = df_gst.Define("thetazf_pi0_ph2","atan2(ptf_pi0_ph2,pzf_pi0_ph2)")
+    
+    return df_gst
+
+
+def define_df_gst_hadron_sums(df_gst,
+                              particles=["proton","neutron","piplus","piminus"],
+                              sfx=["i","f"]):
+    
+    for pname in particles:
+        for s in sfx:
+            for hv in ["px","py","pz","E","ke"]:
+                df_gst = df_gst.Define(f"sum_{hv}{s}_{pname}",f"Sum({hv}{s}_{pname})")
+            
+            df_gst = df_gst.Define(f"sum_pt{s}_{pname}",
+                                   f"sqrt(sum_px{s}_{pname}*sum_px{s}_{pname}+sum_py{s}_{pname}*sum_py{s}_{pname})")
+            df_gst = df_gst.Define(f"sum_p{s}_{pname}",
+                                   f"sqrt(sum_pt{s}_{pname}*sum_pt{s}_{pname}+sum_pz{s}_{pname}*sum_pz{s}_{pname})")
+            
+    for s in sfx:
+        for hv in ["px","py","pz","E","ke"]:
+            df_gst = df_gst.Define(f"sum_{hv}{s}",f"Sum({hv}{s})")
+        df_gst = df_gst.Define(f"sum_pt{s}",f"sqrt(sum_px{s}*sum_px{s}+sum_py{s}*sum_py{s})")
+        df_gst = df_gst.Define(f"sum_p{s}",f"sqrt(sum_pt{s}*sum_pt{s}+sum_pz{s}*sum_pz{s})")
+        
+    return df_gst
+
+
+@ROOT.Numba.Declare(["float"], "float")
+def pt_res(pt):
+    return pt*0.1
