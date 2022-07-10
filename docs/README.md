@@ -14,7 +14,7 @@ Description of other generated variables below.
 
 #### Event-level kinematic variables
 - `ptl`: Transverse momentum of final state lepton (GeV/c)
-- `energy_transfer`: $$E_{\nu} - E_{l}$$ (GeV)
+- `energy_transfer`: $E_{\nu} - E_{l}$ (GeV)
 
 #### Hadron/other final state particle variables
 Generally, variables try to follow a convention like `{variable_name}{suffix}_{particle_type}`. Variables are generally all `RVec` vector types (except in cases like `pi0_ph1` and `pi0_ph2`).
@@ -30,13 +30,13 @@ Suffixes are generally:
 Particle types are:
 - `proton`: both proton (`pdg=2212`) and antiprotons (`pdg=-2212`)
 - `neutron`: both neutrons (`pdg=2112`) and antineutrons (`pdg=-2112`)
-- `piplus`: $$\pi^{+}$$ (`pdg=211`)
-- `piminus`: $$\pi^{-}$$ (`pdg=-211`)
-- `pi0`: $$\pi^{0}$$ (`pdg=111`)
-- `K0`: $$K^{0}$$ (`pdg=311`) and $$\bar{K^{0}}$$ (`pdg=-311`)
-- `Kplus`: $$K^{+}$$ (`pdg=321`)
-- `Kminus`: $$K^{-}$$ (`pdg=-321`)
-- `pi0_ph1`,`pi0_ph2`: photons from decay of $$\pi^{0}$$
+- `piplus`: $\pi^{+}$ (`pdg=211`)
+- `piminus`: $\pi^{-}$ (`pdg=-211`)
+- `pi0`: $\pi^{0}$ (`pdg=111`)
+- `K0`: $K^{0}$ (`pdg=311`) and $\bar{K^{0}}$ (`pdg=-311`)
+- `Kplus`: $K^{+}$ (`pdg=321`)
+- `Kminus`: $K^{-}$ (`pdg=-321`)
+- `pi0_ph1`,`pi0_ph2`: photons from decay of $\pi^{0}$
 
 ##### Kinematic variables
 - `E`: total energy (GeV)
@@ -60,15 +60,15 @@ Most momentum imbalance variables may also have a final `_{optional_descriptor}`
 
 - `hsum_{var}{suffix}`: sum of hadronic elements for momentum imbalance (see kinematic variable list above)
 
-- `delta_alpha{suffix}`: 3D-momentum imbalance angle $$\delta\alpha$$
-- `delta_alphat{suffix}`: transverse (2D) momentum imbalance angle $$\delta\alpha_{T}$$
-- `delta_cosalpha{suffix}`: cos($$\delta\alpha$$)
-- `delta_cosalphat{suffix}`: cos($$\delta\alpha_{T}$$)
+- `delta_alpha{suffix}`: 3D-momentum imbalance angle $\delta\alpha$
+- `delta_alphat{suffix}`: transverse (2D) momentum imbalance angle $\delta\alpha_{T}$
+- `delta_cosalpha{suffix}`: $cos(\delta\alpha)$
+- `delta_cosalphat{suffix}`: $cos(\delta\alpha_{T})$
 
-- `delta_phi{suffix}`: 3D-momentum imbalance angle $$\delta\phi$$
-- `delta_phit{suffix}`: transverse (2D) momentum imbalance angle $$\delta\phi_{T}$$
-- `delta_cosphi{suffix}`: cos($$\delta\phi$$)
-- `delta_cosphi{suffix}`: cos($$\delta\phi_{T}$$)
+- `delta_phi{suffix}`: 3D-momentum imbalance angle $\delta\phi$
+- `delta_phit{suffix}`: transverse (2D) momentum imbalance angle $\delta\phi_{T}$
+- `delta_cosphi{suffix}`: $cos(\delta\phi)$
+- `delta_cosphi{suffix}`: $cos(\delta\phi_{T})$
 
-- `delta_p{suffix}: 3D-momentum imbalance magnitude $$\deltap$$
-- `delta_pt{suffix}: transverse (2D) momentum imbalance magnitude $$\deltap_{T}$$
+- `delta_p{suffix}`: 3D-momentum imbalance magnitude $\delta p$
+- `delta_pt{suffix}`: transverse (2D) momentum imbalance magnitude $\delta p_{T}$
