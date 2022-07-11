@@ -233,6 +233,6 @@ def define_df_gst_hadron_sums(df_gst,
     return df_gst
 
 
-@ROOT.Numba.Declare(["float"], "float")
-def pt_res(pt):
-    return pt*0.1
+#@ROOT.Numba.Declare(["float"], "float")
+#def pt_res(pt):
+ #   return pt*0.1
