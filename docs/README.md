@@ -1,6 +1,10 @@
 # LDMX_eN_GENIE
 eN studies for LDMX
 
+### Examples
+
+See https://github.com/wesketchum/LDMX_eN_GENIE/blob/main/notebooks/examples/Analyze_GST_RDataFrame.ipynb for an example notebook that uses the basic functions.
+
 ### Useful documentation
 - [GENIE Event Generator](http://www.genie-mc.org/)
   - [Model tunes list](https://hep.ph.liv.ac.uk/~costasa/genie/tunes.html)
