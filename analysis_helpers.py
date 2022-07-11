@@ -17,11 +17,14 @@ ECAL_MAXDET_ANGLE = ROOT.TMath.ATan2(49./2.,24.0)
 HCAL_MAXDET_ANGLE = ROOT.TMath.ATan2(310./2.,24.0)
 
 ECAL_ACCEPT_ANGLE = radians(40)
-HCAL_ACCEPT_ANGLE = radians(65)
+#HCAL_ACCEPT_ANGLE = radians(65)
+HCAL_ACCEPT_ANGLE = radians(40)
 
 ELECTRON_ACCEPT_KE = 0.06
 CHPION_ACCEPT_KE = 0.06
 PROTON_ACCEPT_KE = 0.06
+NEUTRON_ACCEPT_KE = 0.06
+PHOTON_ACCEPT_KE = 0.06
 
 def create_gst_chain(files,verbose=False):
     gst_chain = ROOT.TChain("gst")
@@ -45,7 +48,6 @@ RVec<TLorentzVector> getP4vec(const RVec<double> &vpx,const RVec<double> &vpy,co
 ROOT.gInterpreter.Declare(getP4vec_code)
 
 decayPi0_photon1_code='''
-TRandom PI0_DECAY_RAND(100);
 const double PI0_DECAY_E_PHOTON = 0.1395704*0.5;
 using namespace ROOT::VecOps;
 using namespace ROOT::Math;
@@ -54,6 +56,8 @@ RVec<TLorentzVector> decayPi0_photon1(const RVec<double> &vpx,const RVec<double>
 
    auto photon1_4vec = [](const double& px, const double& py, const double& pz, const double& e)
    {
+      TRandom PI0_DECAY_RAND(ULong_t(e*1e14)+ULong_t(px*1e13));
+   
       TLorentzVector pi0_4vec = TLorentzVector(px,py,pz,e);
       //photon1 cos_theta and phi
       double cos_theta = 2.*PI0_DECAY_RAND.Uniform(0,1)-1.;
@@ -132,6 +136,11 @@ def define_df_gst_lep_vars(df_gst):
     df_gst = df_gst.Define("thetazl","atan2(ptl,pzl)") #theta_z of lepton
     df_gst = df_gst.Define("energy_transfer","Ev-El")
     df_gst = df_gst.Define("pv","sqrt(pxv*pxv+pyv*pyv+pzv*pzv)")
+
+    for var in ["px","py","pz"]:
+        df_gst = df_gst.Define(f"{var}dl",f"{var}l-{var}v")
+    df_gst = df_gst.Define(f"pdl",f"sqrt(pxdl*pxdl+pydl*pydl+pzdl*pzdl)")
+
     return df_gst
 
 #define a function to make a bunch of hadron related variables
@@ -175,18 +184,76 @@ def define_df_gst_hadrons_by_pdg(df_gst,
     
     for s in sfx:
         hvars_sfx = [ f'{hv}{s}' for hv in hvars ]
-        for pname,pdgcodes in particle_dict.items():
-            pdgstr=''
+        
+        for pname,pdgcodes in particle_dict.items():    
+            pdgstr='('
             for pdgcode in pdgcodes:
-                if len(pdgstr)==0:
+                if len(pdgstr)==1:
                     pdgstr+=f'pdg{s}=={pdgcode}'
                 else:
                     pdgstr+=f'||pdg{s}=={pdgcode}'
+            pdgstr+=")"
             
             for hv in hvars_sfx:
                 df_gst = df_gst.Define(f'{hv}_{pname}',f'{hv}[{pdgstr}]')        
                 
     return df_gst
+
+def define_df_gst_hadron_acceptance(df_gst,
+                                    hvars=["E","p","px","py","pz",
+                                        "pt","mass","ke",
+                                        "thetaxz","thetayz","thetaz"],
+                                    particles=["proton","neutron","piplus","piminus"],
+                                    ke_min=[PROTON_ACCEPT_KE,NEUTRON_ACCEPT_KE,
+                                            CHPION_ACCEPT_KE,CHPION_ACCEPT_KE],
+                                    thetaz_max=[RTRACKER_ACCEPT_ANGLE,HCAL_ACCEPT_ANGLE,
+                                                RTRACKER_ACCEPT_ANGLE,RTRACKER_ACCEPT_ANGLE],
+                                    sfx=["f"]):
+
+    for i in range(len(particles)):
+        pname=particles[i]
+        ke_min_val=ke_min[i]
+        thetaz_max_val=thetaz_max[i]
+
+        for s in sfx:
+            df_gst = df_gst.Define(f"Accept{s}_{pname}",f"ke{s}_{pname}>{ke_min_val}&&thetaz{s}_{pname}<{thetaz_max_val}")
+            for hv in hvars:
+                df_gst = df_gst.Define(f"{hv}{s}a_{pname}",f"{hv}{s}_{pname}[Accept{s}_{pname}==1]")
+                df_gst = df_gst.Define(f"{hv}{s}m_{pname}",f"{hv}{s}_{pname}[Accept{s}_{pname}!=1]")
+        
+        df_gst = df_gst.Define(f"nfa_{pname}",f"Sum(Acceptf_{pname})")
+        df_gst = df_gst.Define(f"nfm_{pname}",f"(int)Acceptf_{pname}.size()-nfa_{pname}")
+        
+        
+
+    return df_gst
+    
+def define_df_gst_photon_acceptance(df_gst,
+                                    phvars=["E","px","py","pz","pt","thetaz"],
+                                    ke_min=PHOTON_ACCEPT_KE,thetaz_max=ECAL_ACCEPT_ANGLE):
+
+    for phname in ["ph1","ph2"]:
+        df_gst = df_gst.Define(f"Acceptf_pi0_{phname}",
+                               f"Ef_pi0_{phname}>{ke_min}&&thetazf_pi0_{phname}<{thetaz_max}")
+        for var in phvars:
+            df_gst = df_gst.Define(f"{var}fa_pi0_{phname}",f"{var}f_pi0_{phname}[Acceptf_pi0_{phname}==1]")
+            df_gst = df_gst.Define(f"{var}fm_pi0_{phname}",f"{var}f_pi0_{phname}[Acceptf_pi0_{phname}!=1]")
+
+    df_gst = df_gst.Define("Acceptf_pi0_phAll","Acceptf_pi0_ph1&&Acceptf_pi0_ph2")        
+    df_gst = df_gst.Define("Acceptf_pi0_phNone","!Acceptf_pi0_ph1&&!Acceptf_pi0_ph2")
+
+    df_gst = df_gst.Define(f"nfa_pi0_ph",f"Sum(Acceptf_pi0_ph1)+Sum(Acceptf_pi0_ph2)")
+    df_gst = df_gst.Define(f"nfm_pi0_ph",f"(int)Acceptf_pi0_ph1.size()+(int)Acceptf_pi0_ph2.size()-nfa_pi0_ph")
+
+    df_gst = df_gst.Define(f"nfa_pi0",f"Sum(Acceptf_pi0_phAll)")
+    df_gst = df_gst.Define(f"nfm_pi0",f"(int)Acceptf_pi0_phAll.size()-nfa_pi0")
+    
+#    for hv in ["pxf","pyf","pzf","Ef"]:
+#        df_gst = df_gst.Define(f"sum_{hv}_pi0_ph",f"{hv}_pi0_ph1+{hv}_pi0_ph2")
+
+    
+    return df_gst
+
 
 def define_df_gst_pi0decay(df_gst):
     df_gst = df_gst.Define("p4vec_pi0_ph1","decayPi0_photon1(pxf_pi0,pyf_pi0,pzf_pi0,Ef_pi0)")
@@ -206,13 +273,13 @@ def define_df_gst_pi0decay(df_gst):
     
     df_gst = df_gst.Define("thetazf_pi0_ph1","atan2(ptf_pi0_ph1,pzf_pi0_ph1)")
     df_gst = df_gst.Define("thetazf_pi0_ph2","atan2(ptf_pi0_ph2,pzf_pi0_ph2)")
-    
+        
     return df_gst
 
 
 def define_df_gst_hadron_sums(df_gst,
                               particles=["proton","neutron","piplus","piminus"],
-                              sfx=["i","f"]):
+                              sfx=["i","f"],do_pi0=True):
     
     for pname in particles:
         for s in sfx:
@@ -224,15 +291,67 @@ def define_df_gst_hadron_sums(df_gst,
             df_gst = df_gst.Define(f"sum_p{s}_{pname}",
                                    f"sqrt(sum_pt{s}_{pname}*sum_pt{s}_{pname}+sum_pz{s}_{pname}*sum_pz{s}_{pname})")
             
+    if do_pi0:
+        for s in sfx:
+            for hv in ["px","py","pz","E"]:
+                if s=="i":
+                    df_gst = df_gst.Define(f"sum_{hv}{s}_pi0",f"Sum({hv}{s}_{pname})")
+                else:
+                    df_gst = df_gst.Define(f"sum_{hv}{s}_pi0_ph",f"Sum({hv}{s}_pi0_ph1)+Sum({hv}{s}_pi0_ph2)")
+                    
+            if s=="i":
+                df_gst = df_gst.Define(f"sum_pt{s}_pi0",
+                                       f"sqrt(sum_px{s}_pi0*sum_px{s}_pi0+sum_py{s}_pi0*sum_py{s}_pi0)")
+                df_gst = df_gst.Define(f"sum_p{s}_pi0",
+                                       f"sqrt(sum_pt{s}_pi0*sum_pt{s}_pi0+sum_pz{s}_pi0*sum_pz{s}_pi0)")
+            else:
+                df_gst = df_gst.Define(f"sum_pt{s}_pi0_ph",
+                                       f"sqrt(sum_px{s}_pi0_ph*sum_px{s}_pi0_ph+sum_py{s}_pi0_ph*sum_py{s}_pi0_ph)")
+                df_gst = df_gst.Define(f"sum_p{s}_pi0_ph",
+                                       f"sqrt(sum_pt{s}_pi0_ph*sum_pt{s}_pi0_ph+sum_pz{s}_pi0_ph*sum_pz{s}_pi0_ph)")
+                
+
+                    
     for s in sfx:
+        if s!="i" and s!="f": continue
+        
         for hv in ["px","py","pz","E","ke"]:
             df_gst = df_gst.Define(f"sum_{hv}{s}",f"Sum({hv}{s})")
+            
         df_gst = df_gst.Define(f"sum_pt{s}",f"sqrt(sum_px{s}*sum_px{s}+sum_py{s}*sum_py{s})")
         df_gst = df_gst.Define(f"sum_p{s}",f"sqrt(sum_pt{s}*sum_pt{s}+sum_pz{s}*sum_pz{s})")
         
+    
+    return df_gst
+
+
+def define_df_gst_momentum_imbalance(df_gst,suffix_list,cname):
+    
+    for var in ["px","py","pz"]:
+        df_gst = df_gst.Define(f"hsum_{var}{cname}","+".join(f"sum_{var}{s}" for s in suffix_list))
+        df_gst = df_gst.Define(f"delta_{var}{cname}",f"{var}dl+hsum_{var}{cname}")
+    
+    df_gst = df_gst.Define(f"hsum_pt{cname}",f"sqrt(hsum_px{cname}*hsum_px{cname}+hsum_py{cname}*hsum_py{cname})")
+    df_gst = df_gst.Define(f"hsum_p{cname}",f"sqrt(hsum_pt{cname}*hsum_pt{cname}+hsum_pz{cname}*hsum_pz{cname})")
+        
+    df_gst = df_gst.Define(f"delta_pt{cname}",f"sqrt(delta_px{cname}*delta_px{cname}+delta_py{cname}*delta_py{cname})")
+    df_gst = df_gst.Define(f"delta_cosalphat{cname}",f"-1*(pxl*delta_px{cname}+pyl*delta_py{cname})/(ptl*delta_pt{cname})")
+    df_gst = df_gst.Define(f"delta_cosphit{cname}",f"-1*(pxl*hsum_px{cname}+pyl*hsum_py{cname})/(ptl*hsum_pt{cname})")
+    df_gst = df_gst.Define(f"delta_alphat{cname}",f"acos(delta_cosalphat{cname})")
+    df_gst = df_gst.Define(f"delta_phit{cname}",f"acos(delta_cosphit{cname})")
+    
+    df_gst = df_gst.Define(f"delta_p{cname}",
+                        f"sqrt(delta_px{cname}*delta_px{cname}+delta_py{cname}*delta_py{cname}+delta_pz{cname}*delta_pz{cname})")
+    df_gst = df_gst.Define(f"delta_cosalpha{cname}",
+                        f"-1*(pxdl*delta_px{cname}+pydl*delta_py{cname}+pzdl*delta_pz{cname})/(pdl*delta_p{cname})")
+    df_gst = df_gst.Define(f"delta_cosphi{cname}",
+                        f"-1*(pxdl*hsum_px{cname}+pydl*hsum_py{cname}+pzdl*hsum_pz{cname})/(pdl*hsum_p{cname})")
+    df_gst = df_gst.Define(f"delta_alpha{cname}",f"acos(delta_cosalpha{cname})")
+    df_gst = df_gst.Define(f"delta_phi{cname}",f"acos(delta_cosphi{cname})")
+    
     return df_gst
 
 
 #@ROOT.Numba.Declare(["float"], "float")
 #def pt_res(pt):
- #   return pt*0.1
+#    return pt*0.1
