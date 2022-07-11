@@ -6,6 +6,45 @@ eN studies for LDMX
   - [Model tunes list](https://hep.ph.liv.ac.uk/~costasa/genie/tunes.html)
   - [User Manual](https://genie-docdb.pp.rl.ac.uk/cgi-bin/ShowDocument?docid=2)
 
+### Common helper functions
+
+`create_gst_chain(files,verbose=False)`  
+_Returns a TChain from a list of GENIE gst files._
+
+`define_df_gst_lep_vars(df_gst)`  
+_Returns an RDataframe with leptonic kinematic variables added/calculated._
+
+`define_df_gst_hadron_vars(df_gst,sfx=["i","f"])`  
+_Returns an RDataFrame with hadronic kinematic variables added/calculated. Does this for the given suffixes in gst files ('i' for initial state hadrons, 'f' for final state hadrons)._
+
+`define_df_gst_hadrons_by_pdg(df_gst,hvars=["E","p","px","py","pz","pt","mass","ke","thetaxz","thetayz","thetaz"],sfx=["f","i"])`  
+_Returns an RDataFrame with hadronic variables broken down by particle type. `hvars` is the list of hadronic variables to do, and `sfx` is the list of suffixes to consider._
+
+`define_df_gst_pi0decay(df_gst)`  
+_Returns an RDataFrame that performs a simulation of_ $\pi^{0}\rightarrow\gamma\gamma$ _decays._
+
+`define_df_gst_hadron_acceptance(df_gst,  
+                                 hvars=["E","p","px","py","pz",  
+                                        "pt","mass","ke",  
+                                        "thetaxz","thetayz","thetaz"],  
+                                 particles=["proton","neutron","piplus","piminus"],  
+                                 ke_min=[PROTON_ACCEPT_KE,NEUTRON_ACCEPT_KE,  
+                                         CHPION_ACCEPT_KE,CHPION_ACCEPT_KE],  
+                                 thetaz_max=[RTRACKER_ACCEPT_ANGLE,HCAL_ACCEPT_ANGLE,  
+                                             RTRACKER_ACCEPT_ANGLE,RTRACKER_ACCEPT_ANGLE],  
+                                 sfx=["f"]):`  
+_Returns an RDataFrame with hadronic variables selected for detector acceptance. `hvars` is the list of hadronic variables to create, `particles` is the list of particles to consider, `ke_min` is a list of kinetic energy thresholds to apply for each listed particle (in GeV), `thetaz_max` is a list of angular thresholds to apply for each listed particle (radians), and `sfx` is the list of suffixes to consider (generally, just final state particles or `f`). New variables will have suffix `fa` for those accepted, and `fm` for those missed._
+
+`define_df_gst_photon_acceptance(df_gst,phvars=["E","px","py","pz","pt","thetaz"],ke_min=PHOTON_ACCEPT_KE,thetaz_max=ECAL_ACCEPT_ANGLE)`  
+                                    
+_Returns an RDataFrame with pi0 decay photon variables selected for detector acceptance. `phvars` is the list of photon variables to create, `ke_min` is the kinetic energy threshold (GeV), and `thataz_max` is the angular threshold (radians)._
+
+`define_df_gst_hadron_sums(df_gst,particles=["proton","neutron","piplus","piminus"],sfx=["i","f"],do_pi0=True)`  
+_Returns an RDataFrame that calculates hadronic system sums used for momentum imbalance calculations. `particles` is the list of particles to consider, `sfx` is the list of suffixes to calculate for, and `do_pi0` is a boolean on whether to consider neutral pions or not._
+
+`define_df_gst_momentum_imbalance(df_gst,suffix_list,cname)`  
+_Returns an RDataFrame with momentum imbalance variables. `suffix_list` is the list of suffixes to consider, and `cname` is a custom name to attach to the end of momentum imblance variable column names._
+
 ### List of variables in the common DataFrame
 
 GENIE `gst` variables can be found in the [GENIE user manual](https://genie-docdb.pp.rl.ac.uk/cgi-bin/ShowDocument?docid=2) (section 9.5.2.1).
