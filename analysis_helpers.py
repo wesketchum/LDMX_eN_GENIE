@@ -158,7 +158,7 @@ def define_df_gst_hadron_vars(df_gst,sfx=["i","f"]):
         if s=="i":
             df_gst = df_gst.Define(f"p{s}",f"sqrt(px{s}*px{s}+py{s}+py{s}+pz{s}*pz{s})")
             
-        df_gst = df_gst.Define(f"mass{s}",f"sqrt(E{s}*E{s}-p{s}*p{s})")
+        df_gst = df_gst.Define(f"mass{s}",f"sqrt(abs(E{s}*E{s}-p{s}*p{s}))")
         df_gst = df_gst.Define(f"ke{s}",f"E{s}-mass{s}")
         
         #for the hadrons, get the indices sorted by KE
