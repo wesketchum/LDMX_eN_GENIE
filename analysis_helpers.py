@@ -35,6 +35,72 @@ def create_gst_chain(files,verbose=False):
     return gst_chain
 
 
+leading_nucleon_ke_code='''
+using namespace ROOT::VecOps;
+using namespace ROOT::Math;
+double leading_nucleon_ke(const RVec<double> &kefa_proton,const RVec<double> &kefa_neutron)
+{
+
+  double max_proton_ke = -999;
+  double max_neutron_ke = -999;
+
+  if(kefa_proton.size()!=0){
+    max_proton_ke = Max(kefa_proton);
+  }
+  if(kefa_neutron.size()!=0){
+    max_neutron_ke = Max(kefa_neutron);
+  }
+
+  if(max_proton_ke > max_neutron_ke) return max_proton_ke;
+  else return max_neutron_ke;
+
+  return -999;
+
+}
+'''
+ROOT.gInterpreter.Declare(leading_nucleon_ke_code)
+
+subleading_nucleon_ke_code='''
+using namespace ROOT::VecOps;
+using namespace ROOT::Math;
+double subleading_nucleon_ke(const RVec<double> &kefa_proton,const RVec<double> &kefa_neutron)
+{
+
+  double max_proton_ke = -999;
+  double max_neutron_ke = -999;
+  double sub_max_proton_ke = -999;
+  double sub_max_neutron_ke = -999;
+
+  if(kefa_proton.size()>0){
+    max_proton_ke = Max(kefa_proton);
+    if(kefa_proton.size()>1){
+       sub_max_proton_ke = Reverse(Sort(kefa_proton)).at(1);
+    }
+  }
+
+  if(kefa_neutron.size()>0){
+    max_neutron_ke = Max(kefa_neutron);
+    if(kefa_neutron.size()>1){
+       sub_max_neutron_ke = Reverse(Sort(kefa_neutron)).at(1);
+    }
+  }
+
+  if(max_proton_ke > max_neutron_ke){
+    if(sub_max_proton_ke > max_neutron_ke) return sub_max_proton_ke;
+    else return max_neutron_ke;
+  }
+  if(max_neutron_ke > max_proton_ke){
+    if(sub_max_neutron_ke > max_proton_ke) return sub_max_neutron_ke;
+    else return max_proton_ke;
+  }
+
+  return -999;
+
+}
+'''
+ROOT.gInterpreter.Declare(subleading_nucleon_ke_code)
+
+
 getP4vec_code='''
 using namespace ROOT::VecOps;
 RVec<TLorentzVector> getP4vec(const RVec<double> &vpx,const RVec<double> &vpy,const RVec<double> &vpz,const RVec<double> &ve)
