@@ -7,3 +7,6 @@ Reweight
 **.png
 __pycache__
 **/__pychace__
+.DS_Store
+**/.DS_Store
+**.root
