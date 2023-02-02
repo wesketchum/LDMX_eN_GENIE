@@ -1,13 +1,27 @@
+import argparse
+import sys
+
+parser = argparse.ArgumentParser(f'ldmx fire {sys.argv[0]}')
+parser.add_argument('-n','--n_events',default=1000,type=int)
+parser.add_argument('-t','--target',default='Ti')
+parser.add_argument('-r','--run',default=100,type=int)
+parser.add_argument('-s','--seed',default=10,type=int)
+parser.add_argument('-v','--verbosity',default=0,type=int)
+
+arg = parser.parse_args()
+
 #basic params for running
-N_EVENTS = 100
-TARGET='Ti'
-OUTPUT_FILE_NAME = f'test_{TARGET}.root'
-SEED=10
-VERBOSITY=0
+N_EVENTS = arg.n_events
+TARGET=arg.target
+RUN=arg.run
+SEED=arg.seed
+VERBOSITY=arg.verbosity
+
+OUTPUT_FILE_NAME = f'ldmx_genie_G18_02a_00_000_{TARGET}_{RUN}.root'
 
 #locations of things we need...
 PATH_TO_GENIE_SPLINES='/Users/wketchum/ldmx-genie-splines'
-GENIE_MESSENGER_XML_FILE='./ldmxsw_configs/Messenger.xml'
+GENIE_MESSENGER_XML_FILE='./ldmxsw_configs/Messenger_ErrorOnly.xml'
 
 #function for filling targets and abundances
 def get_targets(target_name):
@@ -59,6 +73,7 @@ sim.generators = [ genie_G18_02a_00_000 ]
 p.sequence.append(sim)
 p.outputFiles=[OUTPUT_FILE_NAME]
 p.maxEvents = N_EVENTS
+p.run = RUN
 p.logFrequency = 1
 
 

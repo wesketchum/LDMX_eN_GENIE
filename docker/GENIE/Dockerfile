@@ -1,4 +1,7 @@
 FROM ubuntu:22.04
+MAINTAINER Wesley Ketchum <wketchum@fnal.gov>
+
+ARG NPROC=1
 
 ARG ROOT_VERSION=6.26.06
 ARG CMAKE_CXX_STANDARD=17
@@ -12,30 +15,23 @@ ENV GENIE=$GENIE_BASE/Generator
 ENV GENIE_REWEIGHT=$GENIE_BASE/Reweight
 
 ENV PYTHIA6_LIBRARY=/usr/pythia6
-ENV ROOTSYS=/usr/local
+ENV ROOTSYS=/usr/local/root
+#ENV LANG=C.UTF-8
 
-
-# Start by stealing from ROOT team
-#LABEL maintainer.name="ROOT team"
-#LABEL maintainer.email="root-dev@cern.ch"
-
-ENV LANG=C.UTF-8
-
-COPY packages_ROOT packages_ROOT
-COPY packages_GENIE packages_GENIE
+COPY packages packages
 
 RUN apt-get update -qq && \
     ln -sf /usr/share/zoneinfo/UTC /etc/localtime && \
-    apt-get -y install $(cat packages_ROOT) wget git && \
-    apt-get -y install $(cat packages_GENIE) && \
+    apt-get -y install $(cat packages) wget git && \
     apt-get autoremove -y && \
     apt-get clean -y && \
     rm -rf /var/cache/apt/archives/* && \
-    rm -rf /var/lib/apt/lists/*
-
-RUN yes | unminimize
-
-# clone build and install
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get autoremove --purge &&\
+    apt-get clean all &&\
+    python3 -m pip install --upgrade pip &&\
+    python3 -m pip install --upgrade --no-cache-dir cmake
+#RUN yes | unminimize
 
 RUN mkdir /tmp/source && \
     cd /tmp/source && \
@@ -47,6 +43,19 @@ RUN mkdir /tmp/source && \
     make -j$(nproc) install && \
     rm -rf /tmp/source
 
+#RUN mkdir /tmp/source && \
+#    cd /tmp/source && \
+#    wget https://sourceforge.net/projects/log4cpp/files/latest/download -O log4cpp.tar.gz && \
+#    tar xf log4cpp.tar.gz &&\
+#    cd log4cpp &&\
+#    ./autogen.sh &&\
+#    ./configure &&\
+#    make check &&\
+#    make install -j$NPROC &&\
+#    rm -rf /tmp/source
+
+RUN apt-get update -qq && \
+    apt-get -y install liblog4cpp5-dev
 
 RUN mkdir /usr/pythia6 && \
     wget https://root.cern.ch/download/pythia6.tar.gz && \
@@ -65,54 +74,43 @@ RUN mkdir /usr/pythia6 && \
     gfortran -c -m64 -fPIC -shared -fno-second-underscore tpythia6_called_from_cc.F && \
     gfortran -m64 -shared -Wl,-soname,libPythia6.so -o libPythia6.so main.o  pythia*.o tpythia*.o
 
+RUN mkdir -p /tmp/source && \
+    cd /tmp && \
+    wget https://root.cern/download/root_v$ROOT_VERSION.source.tar.gz -O root.tar.gz && \
+    tar xf root.tar.gz --strip-components=1 --directory source && \
+    cmake \
+      -DCMAKE_BUILD_TYPE=Release \
+      -DCMAKE_CXX_STANDARD=17 \
+      -DCMAKE_INSTALL_PREFIX=$ROOTSYS \
+      -Dgminimal=ON \
+      -Dasimage=ON \
+      -Dgdml=ON \
+      -Dopengl=ON \
+      -Dpyroot=ON \
+      -Dgnuinstall=ON \
+      -Dxrootd=OFF \
+      -Dgsl_shared=ON \ 
+      -Dmathmore=ON \   
+      -Dpythia6=ON \    
+      -DPYTHIA6_LIBRARY=$PYTHIA6_LIBRARY/libPythia6.so \
+      -B build \
+      -S source && \ 
+    cmake --build build --target install -j$NPROC && \
+    rm -rf build source
 
-RUN ROOT_GIT_URL=https://github.com/root-project/root.git \
-    && if [ -z "$(git ls-remote --heads $ROOT_GIT_URL $ROOT_VERSION)" ] ; then \
-    export ROOT_GIT_REVISION="v$(echo $ROOT_VERSION | cut -d. -f1)-$(echo $ROOT_VERSION | cut -d. -f2)-$(echo $ROOT_VERSION | cut -d. -f3)" \
-    ; else \
-    export ROOT_GIT_REVISION=$ROOT_VERSION \
-    ; fi \
-    # Above lines will set ROOT_GIT_REVISION to ROOT_VERSION argument if it corresponds to a valid branch name (such as ROOT_VERSION=master),
-    # otherwise it will assume its a semantic version string and try to convert it into the tag format (such as 6.26.00 -> v6-26-00)
-    && git clone --branch $ROOT_GIT_REVISION --depth=1 $ROOT_GIT_URL /tmp/source \
-    && cd /tmp/source \
-    && mkdir -p /tmp/build &&  cd /tmp/build \
-    && cmake /tmp/source \
-    -DCMAKE_CXX_STANDARD=$CMAKE_CXX_STANDARD \
-    -Dgnuinstall=OFF \
-    -Dsoversion=ON \
-    -Druntime_cxxmodules=OFF \
-    -Dgsl_shared=ON \
-    -Dpythia6=ON \
-    -Dmathmore=ON \
-    # For ROOT version 6.26.00 it is necessary to set `-Druntime_cxxmodules=OFF` (https://github.com/root-project/root/pull/10198)
-    -DCMAKE_INSTALL_PREFIX=$ROOTSYS \
-    -DPYTHIA6_LIBRARY=$PYTHIA6_LIBRARY/libPythia6.so \
-    && make -j$(nproc) install \
-    && rm -rf /tmp/build /tmp/source
-
-RUN /bin/bash -c 'source $ROOTSYS/bin/thisroot.sh'
-
-RUN mkdir -p $GENIE_BASE
-
-RUN git clone --branch R-$GENIE_VERSION https://github.com/GENIE-MC/Generator.git $GENIE_BASE/Generator
-
-RUN cd $GENIE && \
-    ./configure --enable-lhapdf6 --disable-lhapdf5 --enable-gfortran --with-gfortran-lib=/usr/x86_64-linux-gnu/ --disable-pythia8 --with-pythia6-lib=$PYTHIA6_LIBRARY && \
-    gmake -j$(nproc)
-
-#ENV GENIE_LIB_PATH=$GENIE/lib
-ENV LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$GENIE_LIB_PATH
-ENV PATH=$PATH:$GENIE/bin
-
-
-#RUN echo $LD_LIBRARY_PATH
-#RUN git clone --branch R-$GENIE_REWEIGHT_VERSION https://github.com/GENIE-MC/Reweight.git $GENIE_BASE/Reweight
-#RUN echo $GENIE_REWEIGHT
-#RUN git clone --branch wketchum_GHepParticleToPointer https://github.com/wesketchum/Reweight.git $GENIE_BASE/Reweight
-
-#RUN cd $GENIE_REWEIGHT && \
-#    gmake
-
-#RUN ls $GENIE_REWEIGHT
+RUN cd /usr/local/root/lib &&\
+    ln -s /usr/local/root/lib/root/* . &&\
+    mkdir -p $GENIE &&\
+    cd $GENIE_BASE &&\
+    wget -q -O - https://github.com/GENIE-MC/Generator/archive/refs/tags/R-${GENIE_VERSION}.tar.gz |\
+    tar -xz -C Generator --strip-components 1 &&\
+    cd Generator &&\
+    export LD_LIBRARY_PATH=/usr/local/lib:$ROOTSYS/lib/root &&\
+    export PATH=$PATH:$ROOTSYS/bin &&\
+    ./configure --enable-lhapdf6 --disable-lhapdf5 \
+                --enable-gfortran --with-gfortran-lib=/usr/x86_64-linux-gnu/ \
+                --disable-pythia8 --with-pythia6-lib=$PYTHIA6_LIBRARY \
+                --enable-test && \
+    make -j$NPROC && \
+    make -j$NPROC install
 
