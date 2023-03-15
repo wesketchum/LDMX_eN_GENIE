@@ -1,7 +1,35 @@
 from LDMX.Framework import EventTree
 import numpy as np
 import ROOT
+from utils import *
 #from array import array
+
+#common processing function for sim calhits
+#returns e_cal vector, total energy, dictionary of energy contributions by given list of IDs, and unmatched energy
+def process_sim_edeps(calhits,p_ids):
+
+    sim_cal_e_vec = np.array([0.,0.,0.])
+    total_sim_cal_e = 0.0
+    sim_cal_e_unmatched = 0.0
+
+    cntrb_edep_dict = dict.fromkeys(p_ids,0.0)
+    
+    for i_h, calhit in enumerate(calhits):
+        hit_pos = calhit.getPosition()
+        sim_cal_e_vec[0] += calhit.getEdep()*hit_pos[0]
+        sim_cal_e_vec[1] += calhit.getEdep()*hit_pos[1]
+        sim_cal_e_vec[2] += calhit.getEdep()*hit_pos[2]
+        total_sim_cal_e += calhit.getEdep()
+            
+        for i_c in range(calhit.getNumberOfContribs()):
+            cntrb = calhit.getContrib(i_c)
+            if(cntrb.incidentID in p_ids):
+                cntrb_edep_dict[cntrb.incidentID] += cntrb.edep
+            else:
+                sim_cal_e_unmatched += cntrb.edep
+
+    return sim_cal_e_vec, total_sim_cal_e, cntrb_edep_dict, sim_cal_e_unmatched
+
 
 ELECTRON_PT_CUT = 0.
 HCAL_PE_CUT = 0.
@@ -27,46 +55,7 @@ EVENTS_TO_PROCESS = []
 
 VERBOSE = False
 
-TYPE_DICT = {
-    "D": np.float64,
-    "I": np.int32
-    }
-
-def create_tree_from_dict(vars_dict,tree_name="ana_tree",tree_title="eN Analysis Tree",max_array=999):
-    myvars = {}
-    output_tree = ROOT.TTree(tree_name,tree_title)
-    for vname, pars in vars_dict.items():
-
-        if pars[1] not in TYPE_DICT:
-            print(f"Unsupported type {pars[1]}, not registering var {vname}")
-            continue
-            
-        if isinstance(pars[0],int):
-            myvars[vname] = np.zeros(pars[0],dtype=TYPE_DICT[pars[1]])
-            output_tree.Branch(vname,myvars[vname],f"{vname}/{pars[1]}")
-        elif isinstance(pars[0],str):
-            myvars[vname] = np.zeros(max_array,dtype=TYPE_DICT[pars[1]])
-            output_tree.Branch(vname,myvars[vname],f"{vname}[{pars[0]}]/{pars[1]}")
-        else:
-            print(f"Cannot handle type {type(pars[0])} for var {vname}")
-            continue
-
-    return output_tree, myvars
-
-def pt(particle):
-    return np.sqrt(particle.getMomentum()[0]*particle.getMomentum()[0]+
-                       particle.getMomentum()[1]*particle.getMomentum()[1])
-def p(particle):
-    return np.sqrt(particle.getMomentum()[0]*particle.getMomentum()[0]+
-                       particle.getMomentum()[1]*particle.getMomentum()[1]+
-                       particle.getMomentum()[2]*particle.getMomentum()[2])
-
-def thetaz(particle):
-    if(p(particle)<1e-6):
-        return 0
-    return np.arccos(particle.getMomentum()[2]/p(particle))
-
-#input_tree = EventTree.EventTree(FILENAME)
+OUTPUT_FILE = ROOT.TFile("output_file.root","RECREATE")
 
 #var_dict used to create the tree
 # keys: names of the branches we will create
@@ -100,8 +89,22 @@ var_dict = {
     "sim_p_m": ("n_sim_p","D"),
     "sim_p_q": ("n_sim_p","D"),
     "sim_p_thetaz": ("n_sim_p","D"),
-    "sim_p_parent": ("n_sim_p","I"),
 
+    #parent info
+    "sim_p_parent_id": ("n_sim_p","I"),
+    "sim_p_parent_status": ("n_sim_p","I"),
+    "sim_p_parent_pdg": ("n_sim_p","I"),
+    "sim_p_parent_e": ("n_sim_p","D"),
+    "sim_p_parent_px": ("n_sim_p","D"),
+    "sim_p_parent_py": ("n_sim_p","D"),
+    "sim_p_parent_pz": ("n_sim_p","D"),
+    "sim_p_parent_pt": ("n_sim_p","D"),
+    "sim_p_parent_p": ("n_sim_p","D"),
+    "sim_p_parent_m": ("n_sim_p","D"),
+    "sim_p_parent_q": ("n_sim_p","D"),
+    "sim_p_parent_thetaz": ("n_sim_p","D"),
+
+    
     #edep by particle in ecal/hcal
     "sim_p_ecal_e":("n_sim_p","D"),
     "sim_p_hcal_e":("n_sim_p","D"),
@@ -128,14 +131,11 @@ var_dict = {
     #total cal
     "cal_e": (1,"D"),
     "cal_et": (1,"D")
-    }
-
-output_file = ROOT.TFile("output_file.root","RECREATE")
+}
 
 output_tree, variables = create_tree_from_dict(var_dict)
 
 for f in FILES:
-
 
     print(f'Processing file {f}')
     input_tree = EventTree.EventTree(f)
@@ -186,83 +186,51 @@ for f in FILES:
                 variables["sim_p_m"][n_sim_p] = particle.getMass()
                 variables["sim_p_q"][n_sim_p] = particle.getCharge()
                 variables["sim_p_thetaz"][n_sim_p] = thetaz(particle)
-                variables["sim_p_parent"][n_sim_p] = particle.getParents()[0]            
 
+                #initialize the edep per particle tracking ...
                 sim_p_id_dict[i_p] = n_sim_p
-                variables["sim_p_hcal_e"][n_sim_p] = 0
-                variables["sim_p_ecal_e"][n_sim_p] = 0
+                variables["sim_p_hcal_e"][n_sim_p] = 0.0
+                variables["sim_p_ecal_e"][n_sim_p] = 0.0
 
+                #fill parent info
+                p_id = particle.getParents()[0]
+                variables["sim_p_parent_id"][n_sim_p] = p_id
+                if(p_id in sim_p_id_dict.keys()):
+                    p_my_id = sim_p_id_dict[p_id]
+                    variables["sim_p_parent_status"][n_sim_p] = variables["sim_p_status"][p_my_id]
+                    variables["sim_p_parent_pdg"][n_sim_p] = variables["sim_p_pdg"][p_my_id]
+                    variables["sim_p_parent_px"][n_sim_p] = variables["sim_p_px"][p_my_id]
+                    variables["sim_p_parent_py"][n_sim_p] = variables["sim_p_py"][p_my_id]
+                    variables["sim_p_parent_pz"][n_sim_p] = variables["sim_p_pz"][p_my_id]
+                    variables["sim_p_parent_pt"][n_sim_p] = variables["sim_p_pt"][p_my_id]
+                    variables["sim_p_parent_p"][n_sim_p] = variables["sim_p_p"][p_my_id]
+                    variables["sim_p_parent_e"][n_sim_p] = variables["sim_p_e"][p_my_id]
+                    variables["sim_p_parent_m"][n_sim_p] = variables["sim_p_m"][p_my_id]
+                    variables["sim_p_parent_q"][n_sim_p] = variables["sim_p_q"][p_my_id]
+                    variables["sim_p_parent_thetaz"][n_sim_p] = variables["sim_p_thetaz"][p_my_id]                    
+                
                 n_sim_p = n_sim_p+1
             
         variables["n_sim_p"][0] = n_sim_p
 
-        sim_hcal_e_dir = np.array([0.,0.,0.])
-        total_sim_hcal_e = 0
+        sim_hcal_e_vec, total_sim_hcal_e, sim_hcal_cntrb_edep_dict, sim_hcal_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys())
+        sim_ecal_e_vec, total_sim_ecal_e, sim_ecal_cntrb_edep_dict, sim_ecal_e_um = process_sim_edeps(event.EcalSimHits_genie,sim_p_id_dict.keys())
 
-        variables["sim_hcal_e_um"][0] = 0.0
-        
-        for i_h, hcalhit in enumerate(event.HcalSimHits_genie):
-            hit_pos = hcalhit.getPosition()
-            sim_hcal_e_dir[0] += hcalhit.getEdep()*hit_pos[0]
-            sim_hcal_e_dir[1] += hcalhit.getEdep()*hit_pos[1]
-            sim_hcal_e_dir[2] += hcalhit.getEdep()*hit_pos[2]
-            total_sim_hcal_e += hcalhit.getEdep()
-            
-            for i_c in range(hcalhit.getNumberOfContribs()):
-                cntrb = hcalhit.getContrib(i_c)
-                if(cntrb.incidentID in sim_p_id_dict.keys()):
-                    i = sim_p_id_dict[cntrb.incidentID]
-                    variables["sim_p_hcal_e"][i] += cntrb.edep
-                else:
-                    variables["sim_hcal_e_um"][0] += cntrb.edep
+        for pid, edep_sum in sim_hcal_cntrb_edep_dict.items():
+            variables["sim_p_hcal_e"][sim_p_id_dict[pid]] += edep_sum
 
-        sim_ecal_e_dir = np.array([0.,0.,0.])
-        total_sim_ecal_e = 0                    
-
-        variables["sim_ecal_e_um"][0] = 0.0
-
-        for i_h, ecalhit in enumerate(event.EcalSimHits_genie):
-            hit_pos = ecalhit.getPosition()
-            sim_ecal_e_dir[0] += ecalhit.getEdep()*hit_pos[0]
-            sim_ecal_e_dir[1] += ecalhit.getEdep()*hit_pos[1]
-            sim_ecal_e_dir[2] += ecalhit.getEdep()*hit_pos[2]
-            total_sim_ecal_e += ecalhit.getEdep()
-
-            for i_c in range(ecalhit.getNumberOfContribs()):
-                cntrb = ecalhit.getContrib(i_c)
-                if(cntrb.incidentID in sim_p_id_dict.keys()):
-                    i = sim_p_id_dict[cntrb.incidentID]
-                    variables["sim_p_ecal_e"][i] += cntrb.edep
-                else:
-                    variables["sim_ecal_e_um"][0] += cntrb.edep
+        for pid, edep_sum in sim_ecal_cntrb_edep_dict.items():
+            variables["sim_p_ecal_e"][sim_p_id_dict[pid]] += edep_sum
     
-        if(total_sim_hcal_e>0):
-            sim_hcal_e_dir = sim_hcal_e_dir / total_sim_hcal_e
-            sim_hcal_e_dir = sim_hcal_e_dir / np.sqrt(sim_hcal_e_dir[0]*sim_hcal_e_dir[0]+
-                                                      sim_hcal_e_dir[1]*sim_hcal_e_dir[1]+
-                                                      sim_hcal_e_dir[2]*sim_hcal_e_dir[2])
-        sim_hcal_et = total_sim_hcal_e*np.sqrt(sim_hcal_e_dir[0]*sim_hcal_e_dir[0]+
-                                               sim_hcal_e_dir[1]*sim_hcal_e_dir[1])
-        if(total_sim_ecal_e>0):
-            sim_ecal_e_dir = sim_ecal_e_dir / total_sim_ecal_e
-            sim_ecal_e_dir = sim_ecal_e_dir / np.sqrt(sim_ecal_e_dir[0]*sim_ecal_e_dir[0]+
-                                                      sim_ecal_e_dir[1]*sim_ecal_e_dir[1]+
-                                                      sim_ecal_e_dir[2]*sim_ecal_e_dir[2])
-        sim_ecal_et = total_sim_ecal_e*np.sqrt(sim_ecal_e_dir[0]*sim_ecal_e_dir[0]+
-                                               sim_ecal_e_dir[1]*sim_ecal_e_dir[1])
-
-        total_sim_cal_e = total_sim_hcal_e+total_sim_ecal_e
-        sim_cal_e_vec = np.array([total_sim_ecal_e*sim_ecal_e_dir[0]+total_sim_hcal_e*sim_hcal_e_dir[0],
-                                  total_sim_ecal_e*sim_ecal_e_dir[1]+total_sim_hcal_e*sim_hcal_e_dir[1],
-                                  total_sim_ecal_e*sim_ecal_e_dir[2]+total_sim_hcal_e*sim_hcal_e_dir[2]])
-        sim_cal_et = np.sqrt(sim_cal_e_vec[0]*sim_cal_e_vec[0]+sim_cal_e_vec[1]*sim_cal_e_vec[1])
-
         variables["sim_hcal_e"][0] = total_sim_hcal_e
-        variables["sim_hcal_et"][0] = sim_hcal_et
+        variables["sim_hcal_et"][0] = np.sqrt(sim_hcal_e_vec[0]*sim_hcal_e_vec[0]+sim_hcal_e_vec[1]*sim_hcal_e_vec[1])
+        variables["sim_hcal_e_um"][0] = sim_hcal_e_um
         variables["sim_ecal_e"][0] = total_sim_ecal_e
-        variables["sim_ecal_et"][0] = sim_ecal_et
-        variables["sim_cal_e"][0] = total_sim_cal_e
-        variables["sim_cal_et"][0] = sim_cal_et    
+        variables["sim_ecal_et"][0] = np.sqrt(sim_ecal_e_vec[0]*sim_ecal_e_vec[0]+sim_ecal_e_vec[1]*sim_ecal_e_vec[1])
+        variables["sim_ecal_e_um"][0] = sim_ecal_e_um
+        variables["sim_cal_e"][0] = total_sim_hcal_e+total_sim_ecal_e
+        sim_cal_e_vec = sim_hcal_e_vec+sim_ecal_e_vec
+        variables["sim_cal_et"][0] = np.sqrt(sim_cal_e_vec[0]*sim_cal_e_vec[0]+sim_cal_e_vec[1]*sim_cal_e_vec[1])    
 
         if variables["elec_pt"][0] < ELECTRON_PT_CUT:
             output_tree.Fill()
@@ -323,6 +291,6 @@ for f in FILES:
         output_tree.Fill()
 
 
-output_file.Write()
-output_file.Close()
+OUTPUT_FILE.Write()
+OUTPUT_FILE.Close()
 
