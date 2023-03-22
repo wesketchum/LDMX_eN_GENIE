@@ -6,6 +6,9 @@ parser.add_argument('-n','--n_events',default=1000,type=int)
 parser.add_argument('-t','--target',default='Ti')
 parser.add_argument('-r','--run',default=100,type=int)
 parser.add_argument('-v','--verbosity',default=0,type=int)
+parser.add_argument('--output_dir',default='./')
+parser.add_argument('--genie_splines',default='./')
+parser.add_argument('--genie_messenger_xml',default='./Messenger_ErrorOnly.xml')
 
 arg = parser.parse_args()
 
@@ -14,12 +17,13 @@ N_EVENTS = arg.n_events
 TARGET=arg.target
 RUN=arg.run
 VERBOSITY=arg.verbosity
+OUTPUT_DIR=arg.output_dir
 
-OUTPUT_FILE_NAME = f'ldmx_genie_G18_02a_00_000_{TARGET}_{RUN}.root'
+OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_G18_02a_00_000_{TARGET}_{RUN}.root'
 
 #locations of things we need...
-PATH_TO_GENIE_SPLINES='/Users/wketchum/ldmx-genie-splines'
-GENIE_MESSENGER_XML_FILE='./ldmxsw_configs/Messenger_ErrorOnly.xml'
+PATH_TO_GENIE_SPLINES=arg.genie_splines
+GENIE_MESSENGER_XML_FILE=arg.genie_messenger_xml
 
 #function for filling targets and abundances
 def get_targets(target_name):

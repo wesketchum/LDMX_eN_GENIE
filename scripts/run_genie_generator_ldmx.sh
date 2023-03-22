@@ -1,17 +1,18 @@
 #!/bin/sh
 
-source ~/ldmx-sw/scripts/ldmx-env.sh
+MY_LDMX_BASE=~/ldmx-sw
+N_EVENTS_PER_JOB=100
+N_JOBS=10
+START_RUN_NUMBER=900
+
+source $MY_LDMX_BASE/scripts/ldmx-env.sh
 ldmx use dev latest
 
 alias ldmx_detached='docker run --rm -d -e LDMX_BASE -v $LDMX_BASE:$LDMX_BASE ${LDMX_DOCKER_TAG} $(pwd)'
 
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 111 -s 11
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 112 -s 12
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 113 -s 13
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 114 -s 14
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 115 -s 15
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 116 -s 16
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 117 -s 17
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 118 -s 18
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 119 -s 19
-ldmx_detached fire ldmxsw_configs/genie_sim_reco.py -n 100000 -r 120 -s 20
+for (( c=1; c<=$N_JOBS; c++ ))
+do
+    run=$((START_RUN_NUMBER+c))
+    #echo $run
+    ldmx_detached fire ~/LDMX_eN_GENIE/ldmxsw_configs/genie_sim_reco.py -n $N_EVENTS_PER_JOB -r $run --output_dir ~/Data/LDMX --genie_splines ~/ldmx-genie-splines --genie_messenger_xml ~/LDMX_eN_GENIE/ldmxsw_configs/Messenger_ErrorOnly.xml
+done
