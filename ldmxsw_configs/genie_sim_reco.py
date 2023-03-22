@@ -5,7 +5,6 @@ parser = argparse.ArgumentParser(f'ldmx fire {sys.argv[0]}')
 parser.add_argument('-n','--n_events',default=1000,type=int)
 parser.add_argument('-t','--target',default='Ti')
 parser.add_argument('-r','--run',default=100,type=int)
-parser.add_argument('-s','--seed',default=10,type=int)
 parser.add_argument('-v','--verbosity',default=0,type=int)
 
 arg = parser.parse_args()
@@ -14,7 +13,6 @@ arg = parser.parse_args()
 N_EVENTS = arg.n_events
 TARGET=arg.target
 RUN=arg.run
-SEED=arg.seed
 VERBOSITY=arg.verbosity
 
 OUTPUT_FILE_NAME = f'ldmx_genie_G18_02a_00_000_{TARGET}_{RUN}.root'
@@ -59,6 +57,7 @@ targets, abundances = get_targets(TARGET)
 genie_G18_02a_00_000 = generators.genie(name='genie_G18_02a_00_000',
                                         energy = 4.0,
                                         targets = targets,
+                                        target_thickness = 0.3504,
                                         abundances = abundances,
                                         time = 0.0,
                                         position = [0.,0.,0.],
@@ -66,8 +65,7 @@ genie_G18_02a_00_000 = generators.genie(name='genie_G18_02a_00_000',
                                         tune='G18_02a_00_000',
                                         spline_file=f'{PATH_TO_GENIE_SPLINES}/G18_02a_00/gxspl_emode_G18_02a_00.xml',
                                         message_threshold_file=GENIE_MESSENGER_XML_FILE,
-                                        verbosity=VERBOSITY,
-                                        seed=SEED)
+                                        verbosity=VERBOSITY)
 
 sim.generators = [ genie_G18_02a_00_000 ]
 p.sequence.append(sim)
@@ -75,6 +73,10 @@ p.outputFiles=[OUTPUT_FILE_NAME]
 p.maxEvents = N_EVENTS
 p.run = RUN
 p.logFrequency = 1
+
+#uses the run number as a seed by default. But if you want to set differently...
+#p.randomNumberSeedService.external(RUN) 
+
 
 
 ###reco parts
