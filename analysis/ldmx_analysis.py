@@ -2,6 +2,7 @@ from LDMX.Framework import EventTree
 import numpy as np
 import ROOT
 from utils import *
+import glob
 #from array import array
 
 #common processing function for sim calhits
@@ -39,23 +40,26 @@ SIM_PARTICLE_P_CUT = 1.00 #MeV, for status != 1
 
 #FILENAME = 'ldmx_genie_G18_02a_00_000_Ti_101.root'
 
-FILES = [ 'ldmx_genie_G18_02a_00_000_Ti_101.root',
-          'ldmx_genie_G18_02a_00_000_Ti_102.root',
-          'ldmx_genie_G18_02a_00_000_Ti_103.root',
-          'ldmx_genie_G18_02a_00_000_Ti_104.root',
-          'ldmx_genie_G18_02a_00_000_Ti_105.root',
-          'ldmx_genie_G18_02a_00_000_Ti_106.root',
-          'ldmx_genie_G18_02a_00_000_Ti_107.root',
-          'ldmx_genie_G18_02a_00_000_Ti_108.root',
-          'ldmx_genie_G18_02a_00_000_Ti_109.root',
-          'ldmx_genie_G18_02a_00_000_Ti_110.root']             
+#FILES = [ 'ldmx_genie_G18_02a_00_000_Ti_101.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_102.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_103.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_104.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_105.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_106.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_107.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_108.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_109.root',
+#          'ldmx_genie_G18_02a_00_000_Ti_110.root']             
+
+FILES = glob.glob("/Users/wketchum/Data/LDMX/ldmx_genie_G18_02a_00_000_Ti_35*.root")
+print(FILES)
 
 EVENTS_TO_PROCESS = []
 #EVENTS_TO_PROCESS = [84,66]
 
 VERBOSE = False
 
-OUTPUT_FILE = ROOT.TFile("output_file.root","RECREATE")
+OUTPUT_FILE = ROOT.TFile("/Users/wketchum/Data/LDMX/output_file_20Apr_5.root","RECREATE")
 
 #var_dict used to create the tree
 # keys: names of the branches we will create
