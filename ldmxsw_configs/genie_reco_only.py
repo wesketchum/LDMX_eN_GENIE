@@ -13,7 +13,7 @@ import LDMX.Ecal.EcalGeometry
 import LDMX.Hcal.HcalGeometry
 
 #p.inputFiles=["/Users/wketchum/Data/LDMX/ldmx_genie_G18_02a_00_000_Ti_501.root"]
-p.inputFiles=["ldmx_genie_G18_02a_00_000_Ti_1.root"]
+p.inputFiles=["ldmx_genie_G18_02a_02_11b_Ti_3.root"]
 p.outputFiles=["test_output.root"]
 p.logFrequency = 1
 p.histogramFile = "myHistFile.root"
@@ -30,12 +30,12 @@ import LDMX.Hcal.hcal_hardcoded_conditions
 import LDMX.Ecal.digi as ecal_digi
 import LDMX.Hcal.digi as hcal_digi
 
-#p.sequence = [
-#    ecal_digi.EcalDigiProducer(),
-#    ecal_digi.EcalRecProducer(),
-#    hcal_digi.HcalDigiProducer(),
-#    hcal_digi.HcalRecProducer()
-#]
+p.sequence = [
+    ecal_digi.EcalDigiProducer(),
+    ecal_digi.EcalRecProducer(),
+    hcal_digi.HcalDigiProducer(),
+    hcal_digi.HcalRecProducer()
+]
 
 ###tracking parts
 
@@ -110,10 +110,10 @@ recoil_dqm.track_collection = tracking_recoil.out_trk_collection
 recoil_dqm.truth_collection = "RecoilTruthTracks"
 recoil_dqm.title = ""
 
-p.sequence = [ digiRecoil,
+p.sequence.extend([ digiRecoil,
                     truth_tracking,
                       #seederTagger, seederRecoil,
                       #tracking_tagger,
                       tracking_recoil,
-                      recoil_dqm ]#, seed_recoil_dqm]
+                      recoil_dqm ])#, seed_recoil_dqm]
 

@@ -5,6 +5,7 @@ parser = argparse.ArgumentParser(f'ldmx fire {sys.argv[0]}')
 parser.add_argument('-n','--n_events',default=1000,type=int)
 parser.add_argument('-t','--target',default='Ti')
 parser.add_argument('-r','--run',default=100,type=int)
+parser.add_argument('--tune',default='G18_02a_02_11b')
 parser.add_argument('-v','--verbosity',default=0,type=int)
 parser.add_argument('--output_dir',default='./')
 parser.add_argument('--genie_splines',default='./')
@@ -16,10 +17,12 @@ arg = parser.parse_args()
 N_EVENTS = arg.n_events
 TARGET=arg.target
 RUN=arg.run
+TUNE=arg.tune
 VERBOSITY=arg.verbosity
 OUTPUT_DIR=arg.output_dir
 
-OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_G18_02a_00_000_{TARGET}_{RUN}.root'
+OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_{TUNE}_{TARGET}_{RUN}.root'
+HIST_OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_{TUNE}_{TARGET}_{RUN}_hist.root'
 
 #locations of things we need...
 PATH_TO_GENIE_SPLINES=arg.genie_splines
@@ -32,8 +35,10 @@ def get_targets(target_name):
     abundances = []
 
     if(target_name=='Ti'):
-        targets = [ 1000220460, 1000220470, 1000220480, 1000220490, 1000220500 ]
-        abundances = [ 0.0825, 0.0744, 0.7372, 0.0541, 0.0581 ]
+        #targets = [ 1000220460, 1000220470, 1000220480, 1000220490, 1000220500 ]
+        #abundances = [ 0.0825, 0.0744, 0.7372, 0.0541, 0.0581 ]
+        targets = [ 1000220460, 1000220470, 1000220480, 1000220490 ]
+        abundances = [ 0.0825, 0.0744, 0.7372, 0.0541 ]
     elif(target_name=='W'):
         targets = [ 1000741820, 1000741830, 1000741840, 1000741860 ]
         abundances = [ 0.2650, 0.1431, 0.3064, 0.2843 ]
@@ -58,26 +63,27 @@ sim.setDetector(det_name='ldmx-det-v14',include_scoring_planes=True)
 
 targets, abundances = get_targets(TARGET)
 
-genie_G18_02a_00_000 = generators.genie(name='genie_G18_02a_00_000',
-                                        energy = 4.0,
-                                        targets = targets,
-                                        target_thickness = 0.3504,
-                                        abundances = abundances,
-                                        time = 0.0,
-                                        position = [0.,0.,0.],
-                                        direction = [0.,0.,1.],
-                                        tune='G18_02a_00_000',
-                                        spline_file=f'{PATH_TO_GENIE_SPLINES}/G18_02a_00/gxspl_emode_G18_02a_00.xml',
-                                        message_threshold_file=GENIE_MESSENGER_XML_FILE,
-                                        verbosity=VERBOSITY)
+genie_4GeV = generators.genie(name=f'genie_{TUNE}',
+                              energy = 4.0,
+                              targets = targets,
+                              target_thickness = 0.3504,
+                              abundances = abundances,
+                              time = 0.0,
+                              position = [0.,0.,0.],
+                              beam_size = [ 20., 80. ],
+                              direction = [0.,0.,1.],
+                              tune=TUNE,
+                              spline_file=f'{PATH_TO_GENIE_SPLINES}/gxspl_emode_GENIE_v3_04_00.xml',
+                              message_threshold_file=GENIE_MESSENGER_XML_FILE,
+                              verbosity=VERBOSITY)
 
-sim.generators = [ genie_G18_02a_00_000 ]
+sim.generators = [ genie_4GeV ]
 p.sequence.append(sim)
 p.outputFiles=[OUTPUT_FILE_NAME]
 p.maxEvents = N_EVENTS
 p.run = RUN
 p.logFrequency = 1
-p.histogramFile = "myHistFile.root"
+p.histogramFile = HIST_OUTPUT_FILE_NAME
 
 #uses the run number as a seed by default. But if you want to set differently...
 #p.randomNumberSeedService.external(RUN) 
@@ -85,18 +91,18 @@ p.histogramFile = "myHistFile.root"
 
 
 ###reco parts
-#import LDMX.Ecal.ecal_hardcoded_conditions
-#import LDMX.Hcal.HcalGeometry
-#import LDMX.Hcal.hcal_hardcoded_conditions
-#import LDMX.Ecal.digi as ecal_digi
-#import LDMX.Hcal.digi as hcal_digi
+import LDMX.Ecal.ecal_hardcoded_conditions
+import LDMX.Hcal.HcalGeometry
+import LDMX.Hcal.hcal_hardcoded_conditions
+import LDMX.Ecal.digi as ecal_digi
+import LDMX.Hcal.digi as hcal_digi
 
-#p.sequence.extend([
-#    ecal_digi.EcalDigiProducer(),
-#    ecal_digi.EcalRecProducer(),
-#    hcal_digi.HcalDigiProducer(),
-#    hcal_digi.HcalRecProducer()
-#])
+p.sequence.extend([
+    ecal_digi.EcalDigiProducer(),
+    ecal_digi.EcalRecProducer(),
+    hcal_digi.HcalDigiProducer(),
+    hcal_digi.HcalRecProducer()
+])
 
 ###tracking parts
 
@@ -171,10 +177,10 @@ recoil_dqm.track_collection = tracking_recoil.out_trk_collection
 recoil_dqm.truth_collection = "RecoilTruthTracks"
 recoil_dqm.title = ""
 
-#p.sequence.extend([ digiRecoil,
-#                    truth_tracking,
-#                      #seederTagger, seederRecoil,
-#                      #tracking_tagger,
-#                      tracking_recoil])#,
-#                      #recoil_dqm ])#, seed_recoil_dqm]
+p.sequence.extend([ digiRecoil,
+                    truth_tracking,
+                      #seederTagger, seederRecoil,
+                      #tracking_tagger,
+                      tracking_recoil,
+                      recoil_dqm ])#, seed_recoil_dqm]
 
