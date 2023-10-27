@@ -2,8 +2,11 @@ import argparse
 import sys
 
 parser = argparse.ArgumentParser(f'ldmx fire {sys.argv[0]}')
+parser.add_argument('-i','--input')
 
 arg = parser.parse_args()
+OUTPUT_FILE_NAME = f'{arg.input[:-5]}_reco.root' #strip .root
+HIST_OUTPUT_FILE_NAME = f'{arg.input[:-5]}_reco_hist.root' #strip .root
 
 from LDMX.Framework import ldmxcfg
 
@@ -13,10 +16,10 @@ import LDMX.Ecal.EcalGeometry
 import LDMX.Hcal.HcalGeometry
 
 #p.inputFiles=["/Users/wketchum/Data/LDMX/ldmx_genie_G18_02a_00_000_Ti_501.root"]
-p.inputFiles=["ldmx_genie_G18_02a_02_11b_Ti_3.root"]
-p.outputFiles=["test_output.root"]
+p.inputFiles=[arg.input]
+p.outputFiles=[OUTPUT_FILE_NAME]
 p.logFrequency = 1
-p.histogramFile = "myHistFile.root"
+p.histogramFile = HIST_OUTPUT_FILE_NAME
 
 #uses the run number as a seed by default. But if you want to set differently...
 #p.randomNumberSeedService.external(RUN) 
