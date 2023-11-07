@@ -1,7 +1,7 @@
 from LDMX.Framework import EventTree
 import numpy as np
 import ROOT
-from utils import *
+from analysis_utilities import *
 import glob
 #from array import array
 
@@ -286,7 +286,7 @@ var_dict = {
     "cal_et": (1,"D")
 }
 
-#FILES = glob.glob("/Users/wketchum/Data/LDMX/production_27Oct2023/ldmx_genie_G18_02a_02_11b_Ti_*_reco.root")
+FILES = glob.glob("/output/ldmx_genie_*_reco.root")
 #print(FILES)
 
 #import concurrent.futures
@@ -297,6 +297,6 @@ var_dict = {
 #        for future in concurrent.futures.as_completed(future_to_ifile):
 #                ifile = future_to_ifile[future]
 #                res = future.result()
-
-process_file("/Users/wketchum/LDMX_eN_GENIE/ldmx_genie_G18_02a_02_11b_Ti_8GeV_1_reco.root")
+for f in FILES:
+    process_file(f)
                     

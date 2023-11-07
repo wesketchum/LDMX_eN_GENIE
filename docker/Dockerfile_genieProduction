@@ -1,0 +1,39 @@
+###############################################################################
+# This dockerfile is meant to build the production image of ldmx-sw
+#   for the development image, look at the LDMX-Software/docker repo
+###############################################################################
+
+FROM ghcr.io/wesketchum/ldmxsw:latest
+
+ARG NPROC=1
+
+# install ldmx-sw into the container at /usr/local
+COPY . /code
+RUN mkdir /code/build &&\
+    /etc/entry.sh /code/build cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. &&\
+    /etc/entry.sh /code/build make -j${NPROC} install &&\
+    rm -rf code &&\
+    ldconfig /usr/local/lib
+
+ENV LDMX_SW_INSTALL=/usr/local
+
+#pull down ldmx-genie-splines
+WORKDIR /ldmx-genie-splines
+RUN wget -q https://github.com/wesketchum/ldmx-genie-splines/archive/refs/heads/main.tar.gz &&\
+    tar xzf main.tar.gz --strip-components 1
+
+#pull down LDMX_eN_GENIE
+WORKDIR /LDMX_eN_GENIE
+RUN wget -q https://github.com/wesketchum/LDMX_eN_GENIE/archive/refs/heads/main.tar.gz &&\
+    tar xzf main.tar.gz --strip-components 1
+
+#directory for placing output. Needs to be mounted.
+VOLUME /output
+
+ENV N_EVENTS_PER_JOB=20000
+ENV RUN=9999
+ENV TARGET=Ti
+ENV TUNE=G18_02a_02_11b
+ENV ENERGY=4
+
+ENTRYPOINT ["/etc/entry.sh",".","/LDMX_eN_GENIE/scripts/run_genie_sim_and_reco.sh"]
