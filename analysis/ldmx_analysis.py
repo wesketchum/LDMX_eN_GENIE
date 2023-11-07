@@ -31,125 +31,32 @@ def process_sim_edeps(calhits,p_ids):
 
     return sim_cal_e_vec, total_sim_cal_e, cntrb_edep_dict, sim_cal_e_unmatched
 
-
 ELECTRON_PT_CUT = 0.
 HCAL_PE_CUT = 0.
 ECAL_PE_CUT = 0.
 
 SIM_PARTICLE_P_CUT = 1.00 #MeV, for status != 1
 
-#FILENAME = 'ldmx_genie_G18_02a_00_000_Ti_101.root'
-
-#FILES = [ 'ldmx_genie_G18_02a_00_000_Ti_101.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_102.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_103.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_104.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_105.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_106.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_107.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_108.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_109.root',
-#          'ldmx_genie_G18_02a_00_000_Ti_110.root']             
-
-FILES = glob.glob("/Users/wketchum/Data/LDMX/ldmx_genie_G18_02a_00_000_Ti_35*.root")
-print(FILES)
-
-EVENTS_TO_PROCESS = []
-#EVENTS_TO_PROCESS = [84,66]
+#EVENTS_TO_PROCESS = []
 
 VERBOSE = False
 
-OUTPUT_FILE = ROOT.TFile("/Users/wketchum/Data/LDMX/output_file_20Apr_5.root","RECREATE")
 
-#var_dict used to create the tree
-# keys: names of the branches we will create
-# val: tuple with size (either int array size,
-# or if string the entry that will give it its length) and ROOT type
-# right now, ROOT type is either D or I
+def process_file(ifile):
 
-var_dict = {
-    "run": (1,"I"),
-    "event": (1,"I"),
+    ofile = ifile[:-10]+"_ana.root"
+    OUTPUT_FILE = ROOT.TFile(ofile,"RECREATE")
+    output_tree, variables = create_tree_from_dict(var_dict)
 
-    #outgoing electron params
-    "elec_px": (1,"D"),
-    "elec_py": (1,"D"),
-    "elec_pz": (1,"D"),
-    "elec_pt": (1,"D"),
-    "elec_p": (1,"D"),
-    "elec_e": (1,"D"),
-    "elec_thetaz": (1,"D"),
-
-    "n_sim_p": (1,"I"),
-    "sim_p_id": ("n_sim_p","I"),
-    "sim_p_status": ("n_sim_p","I"),
-    "sim_p_pdg": ("n_sim_p","I"),
-    "sim_p_e": ("n_sim_p","D"),
-    "sim_p_px": ("n_sim_p","D"),
-    "sim_p_py": ("n_sim_p","D"),
-    "sim_p_pz": ("n_sim_p","D"),
-    "sim_p_pt": ("n_sim_p","D"),
-    "sim_p_p": ("n_sim_p","D"),
-    "sim_p_m": ("n_sim_p","D"),
-    "sim_p_q": ("n_sim_p","D"),
-    "sim_p_thetaz": ("n_sim_p","D"),
-
-    #parent info
-    "sim_p_parent_id": ("n_sim_p","I"),
-    "sim_p_parent_status": ("n_sim_p","I"),
-    "sim_p_parent_pdg": ("n_sim_p","I"),
-    "sim_p_parent_e": ("n_sim_p","D"),
-    "sim_p_parent_px": ("n_sim_p","D"),
-    "sim_p_parent_py": ("n_sim_p","D"),
-    "sim_p_parent_pz": ("n_sim_p","D"),
-    "sim_p_parent_pt": ("n_sim_p","D"),
-    "sim_p_parent_p": ("n_sim_p","D"),
-    "sim_p_parent_m": ("n_sim_p","D"),
-    "sim_p_parent_q": ("n_sim_p","D"),
-    "sim_p_parent_thetaz": ("n_sim_p","D"),
-
-    
-    #edep by particle in ecal/hcal
-    "sim_p_ecal_e":("n_sim_p","D"),
-    "sim_p_hcal_e":("n_sim_p","D"),
-
-    #edeps for unmatched particles
-    "sim_ecal_e_um": (1,"D"),
-    "sim_hcal_e_um": (1,"D"),    
-    
-    "sim_hcal_e": (1,"D"),
-    "sim_hcal_et": (1,"D"),
-    "sim_ecal_e": (1,"D"),
-    "sim_ecal_et": (1,"D"),
-    "sim_cal_e": (1,"D"),
-    "sim_cal_et": (1,"D"),
-    
-    #hcal
-    "hcal_e": (1,"D"),
-    "hcal_et": (1,"D"),
-
-    #ecal
-    "ecal_e": (1,"D"),
-    "ecal_et": (1,"D"),
-
-    #total cal
-    "cal_e": (1,"D"),
-    "cal_et": (1,"D")
-}
-
-output_tree, variables = create_tree_from_dict(var_dict)
-
-for f in FILES:
-
-    print(f'Processing file {f}')
-    input_tree = EventTree.EventTree(f)
+    print(f'Processing file {ifile}. Output: {ofile}')
+    input_tree = EventTree.EventTree(ifile)
 
     for ie, event in enumerate(input_tree):
 
-        if(ie!=0 and ie%1000==0):
-            print(f'\tProcessing event {ie}')
+        #if(ie!=0 and ie%1000==0):
+        #    print(f'\tProcessing event {ie}')
         
-        if(len(EVENTS_TO_PROCESS)>0 and (event.EventHeader.getEventNumber() not in EVENTS_TO_PROCESS)): continue
+        #if(len(EVENTS_TO_PROCESS)>0 and (event.EventHeader.getEventNumber() not in EVENTS_TO_PROCESS)): continue
     
         if(VERBOSE): event.EventHeader.Print()
 
@@ -295,6 +202,101 @@ for f in FILES:
         output_tree.Fill()
 
 
-OUTPUT_FILE.Write()
-OUTPUT_FILE.Close()
+    OUTPUT_FILE.Write()
+    OUTPUT_FILE.Close()
 
+
+
+
+#OUTPUT_FILE = ROOT.TFile("/Users/wketchum/Data/LDMX/ldmx_genie_G18_02a_02_11b_Ti_3_ana.root","RECREATE")
+
+#var_dict used to create the tree
+# keys: names of the branches we will create
+# val: tuple with size (either int array size,
+# or if string the entry that will give it its length) and ROOT type
+# right now, ROOT type is either D or I
+
+var_dict = {
+    "run": (1,"I"),
+    "event": (1,"I"),
+
+    #outgoing electron params
+    "elec_px": (1,"D"),
+    "elec_py": (1,"D"),
+    "elec_pz": (1,"D"),
+    "elec_pt": (1,"D"),
+    "elec_p": (1,"D"),
+    "elec_e": (1,"D"),
+    "elec_thetaz": (1,"D"),
+
+    "n_sim_p": (1,"I"),
+    "sim_p_id": ("n_sim_p","I"),
+    "sim_p_status": ("n_sim_p","I"),
+    "sim_p_pdg": ("n_sim_p","I"),
+    "sim_p_e": ("n_sim_p","D"),
+    "sim_p_px": ("n_sim_p","D"),
+    "sim_p_py": ("n_sim_p","D"),
+    "sim_p_pz": ("n_sim_p","D"),
+    "sim_p_pt": ("n_sim_p","D"),
+    "sim_p_p": ("n_sim_p","D"),
+    "sim_p_m": ("n_sim_p","D"),
+    "sim_p_q": ("n_sim_p","D"),
+    "sim_p_thetaz": ("n_sim_p","D"),
+
+    #parent info
+    "sim_p_parent_id": ("n_sim_p","I"),
+    "sim_p_parent_status": ("n_sim_p","I"),
+    "sim_p_parent_pdg": ("n_sim_p","I"),
+    "sim_p_parent_e": ("n_sim_p","D"),
+    "sim_p_parent_px": ("n_sim_p","D"),
+    "sim_p_parent_py": ("n_sim_p","D"),
+    "sim_p_parent_pz": ("n_sim_p","D"),
+    "sim_p_parent_pt": ("n_sim_p","D"),
+    "sim_p_parent_p": ("n_sim_p","D"),
+    "sim_p_parent_m": ("n_sim_p","D"),
+    "sim_p_parent_q": ("n_sim_p","D"),
+    "sim_p_parent_thetaz": ("n_sim_p","D"),
+
+    
+    #edep by particle in ecal/hcal
+    "sim_p_ecal_e":("n_sim_p","D"),
+    "sim_p_hcal_e":("n_sim_p","D"),
+
+    #edeps for unmatched particles
+    "sim_ecal_e_um": (1,"D"),
+    "sim_hcal_e_um": (1,"D"),    
+    
+    "sim_hcal_e": (1,"D"),
+    "sim_hcal_et": (1,"D"),
+    "sim_ecal_e": (1,"D"),
+    "sim_ecal_et": (1,"D"),
+    "sim_cal_e": (1,"D"),
+    "sim_cal_et": (1,"D"),
+    
+    #hcal
+    "hcal_e": (1,"D"),
+    "hcal_et": (1,"D"),
+
+    #ecal
+    "ecal_e": (1,"D"),
+    "ecal_et": (1,"D"),
+
+    #total cal
+    "cal_e": (1,"D"),
+    "cal_et": (1,"D")
+}
+
+#FILES = glob.glob("/Users/wketchum/Data/LDMX/production_27Oct2023/ldmx_genie_G18_02a_02_11b_Ti_*_reco.root")
+#print(FILES)
+
+#import concurrent.futures
+#MAX_WORKERS=10
+
+#with concurrent.futures.ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+#        future_to_ifile = {executor.submit(process_file,ifile): ifile for ifile in FILES[:12]}
+#        for future in concurrent.futures.as_completed(future_to_ifile):
+#                ifile = future_to_ifile[future]
+#                res = future.result()
+
+process_file("/Users/wketchum/LDMX_eN_GENIE/ldmx_genie_G18_02a_02_11b_Ti_8GeV_1_reco.root")
+                    

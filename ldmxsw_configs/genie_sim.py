@@ -7,6 +7,7 @@ parser.add_argument('-t','--target',default='Ti')
 parser.add_argument('-r','--run',default=100,type=int)
 parser.add_argument('--tune',default='G18_02a_02_11b')
 parser.add_argument('-v','--verbosity',default=0,type=int)
+parser.add_argument('-e', '--energy', default=4,type=int)
 parser.add_argument('--output_dir',default='./')
 parser.add_argument('--genie_splines',default='./')
 parser.add_argument('--genie_messenger_xml',default='./Messenger_ErrorOnly.xml')
@@ -20,9 +21,11 @@ RUN=arg.run
 TUNE=arg.tune
 VERBOSITY=arg.verbosity
 OUTPUT_DIR=arg.output_dir
+ENERGY=arg.energy
 
-OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_{TUNE}_{TARGET}_{RUN}.root'
-HIST_OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_{TUNE}_{TARGET}_{RUN}_hist.root'
+
+OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_{TUNE}_{TARGET}_{ENERGY}GeV_{RUN}.root'
+HIST_OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_{TUNE}_{TARGET}_{ENERGY}GeV_{RUN}_hist.root'
 
 #locations of things we need...
 PATH_TO_GENIE_SPLINES=arg.genie_splines
@@ -47,6 +50,14 @@ def get_targets(target_name):
 
     return targets, abundances
 
+if ENERGY==4:
+    DET_NAME="ldmx-det-v14"
+elif ENERGY==8:
+    DET_NAME="ldmx-det-v14-8gev"
+else:
+    print("Energy must be 4 or 8 GeV!")
+    sys.exit()
+
 from LDMX.Framework import ldmxcfg
 from LDMX.SimCore import generators
 from LDMX.SimCore import simulator
@@ -57,12 +68,12 @@ import LDMX.Ecal.EcalGeometry
 import LDMX.Hcal.HcalGeometry
 
 sim = simulator.simulator('sim')
-sim.setDetector(det_name='ldmx-det-v14',include_scoring_planes=True)
+sim.setDetector(det_name=DET_NAME,include_scoring_planes=True)
 
 targets, abundances = get_targets(TARGET)
 
-genie_4GeV = generators.genie(name=f'genie_{TUNE}',
-                              energy = 4.0,
+genie = generators.genie(name=f'genie_{TUNE}',
+                              energy = float(ENERGY),
                               targets = targets,
                               target_thickness = 0.3504,
                               abundances = abundances,
@@ -75,7 +86,7 @@ genie_4GeV = generators.genie(name=f'genie_{TUNE}',
                               message_threshold_file=GENIE_MESSENGER_XML_FILE,
                               verbosity=VERBOSITY)
 
-sim.generators = [ genie_4GeV ]
+sim.generators = [ genie ]
 p.sequence.append(sim)
 p.outputFiles=[OUTPUT_FILE_NAME]
 p.maxEvents = N_EVENTS
