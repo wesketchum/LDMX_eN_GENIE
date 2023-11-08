@@ -11,7 +11,7 @@ OUTPUT_FILE_NAME=arg.output
 if OUTPUT_FILE_NAME is None:
     OUTPUT_FILE_NAME= f'{arg.input[:-5]}_reco.root'
 
-if OUTPUT_FILE_NAME[-5:]!=".root"
+if OUTPUT_FILE_NAME[-5:]!=".root":
     OUTPUT_FILE_NAME=OUTPUT_FILE_NAME+".root"
 
 output_file_name_local=OUTPUT_FILE_NAME.split("/")[-1]

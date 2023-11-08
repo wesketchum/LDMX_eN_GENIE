@@ -11,6 +11,8 @@ import sys
 parser = argparse.ArgumentParser()
 parser.add_argument('-i','--input',required=True)
 
+arg = parser.parse_args()
+
 #common processing function for sim calhits
 #returns e_cal vector, total energy, dictionary of energy contributions by given list of IDs, and unmatched energy
 def process_sim_edeps(calhits,p_ids):

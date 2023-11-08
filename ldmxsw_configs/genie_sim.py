@@ -20,13 +20,13 @@ TARGET=arg.target
 RUN=arg.run
 TUNE=arg.tune
 VERBOSITY=arg.verbosity
-OUTPUT_FILE_NAME=arg.output_file
+OUTPUT_FILE_NAME=arg.output
 ENERGY=arg.energy
 
 if OUTPUT_FILE_NAME is None:
     OUTPUT_FILE_NAME= f'ldmx_genie_{TUNE}_{TARGET}_{ENERGY}GeV_{RUN}.root'
 
-if OUTPUT_FILE_NAME[-5:]!=".root"
+if OUTPUT_FILE_NAME[-5:]!=".root":
     OUTPUT_FILE_NAME=OUTPUT_FILE_NAME+".root"
 
 output_file_name_local=OUTPUT_FILE_NAME.split("/")[-1]
