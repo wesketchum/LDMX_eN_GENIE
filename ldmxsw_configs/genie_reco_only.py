@@ -2,11 +2,20 @@ import argparse
 import sys
 
 parser = argparse.ArgumentParser(f'ldmx fire {sys.argv[0]}')
-parser.add_argument('-i','--input')
+parser.add_argument('-i','--input',required=True)
+parser.add_argument('-o','--output',default=None)
 
 arg = parser.parse_args()
-OUTPUT_FILE_NAME = f'{arg.input[:-5]}_reco.root' #strip .root
-HIST_OUTPUT_FILE_NAME = f'{arg.input[:-5]}_reco_hist.root' #strip .root
+OUTPUT_FILE_NAME=arg.output
+
+if OUTPUT_FILE_NAME is None:
+    OUTPUT_FILE_NAME= f'{arg.input[:-5]}_reco.root'
+
+if OUTPUT_FILE_NAME[-5:]!=".root"
+    OUTPUT_FILE_NAME=OUTPUT_FILE_NAME+".root"
+
+output_file_name_local=OUTPUT_FILE_NAME.split("/")[-1]
+HIST_OUTPUT_FILE_NAME = OUTPUT_FILE_NAME[:len(OUTPUT_FILE_NAME)-len(output_file_name_local)]+output_file_name_local[:-5]+"_hist.root"
 
 from LDMX.Framework import ldmxcfg
 

@@ -5,6 +5,12 @@ from analysis_utilities import *
 import glob
 #from array import array
 
+import argparse
+import sys
+
+parser = argparse.ArgumentParser()
+parser.add_argument('-i','--input',required=True)
+
 #common processing function for sim calhits
 #returns e_cal vector, total energy, dictionary of energy contributions by given list of IDs, and unmatched energy
 def process_sim_edeps(calhits,p_ids):
@@ -44,7 +50,7 @@ VERBOSE = False
 
 def process_file(ifile):
 
-    ofile = ifile[:-10]+"_ana.root"
+    ofile = ifile[:-5]+"_ana.root"
     OUTPUT_FILE = ROOT.TFile(ofile,"RECREATE")
     output_tree, variables = create_tree_from_dict(var_dict)
 
@@ -286,7 +292,7 @@ var_dict = {
     "cal_et": (1,"D")
 }
 
-FILES = glob.glob("/output/ldmx_genie_*_reco.root")
+FILES = glob.glob(arg.input)
 #print(FILES)
 
 #import concurrent.futures
