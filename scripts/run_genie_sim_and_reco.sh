@@ -27,6 +27,7 @@ while getopts ":hn:r:t:T:e:" option; do
 	    echo "Error: Invalid option"
 	    Help
 	    exit;;
+    esac
 done
 
 sim_file=ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}.root
