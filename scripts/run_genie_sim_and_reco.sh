@@ -30,7 +30,13 @@ while getopts ":hn:r:t:T:e:" option; do
     esac
 done
 
-pwd
+output_mounted=`mount | grep mount | grep /output`
+
+if [ -z "$output_mounted" ] || ! [ -w "/output" ]
+then
+    echo "The /output volume is not mounted or is not writeable."
+    echo "Please mount it from the docker run command if you want access to files locally."
+fi
 
 sim_file=ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}.root
 echo $sim_file
@@ -46,10 +52,11 @@ python3 /LDMX_eN_GENIE/analysis/ldmx_analysis.py -i $reco_file
 ls -l *.root
 rm $sim_file
 
-if [ -w "/output" ]; then
+if [ -z "$output_mounted" ] || ! [ -w "/output" ]
+then
+    echo "The /output volume is not mounted or is not writeable."
+    echo "Please mount it from the docker run command if you want access to files locally."
+else
     echo "Moving files to /output directory"
     mv *.root /output/
-else
-    echo "The /output directory is not writeable."
-    echo "Mount an output directory in docker run command if you want access to files locally."
 fi
