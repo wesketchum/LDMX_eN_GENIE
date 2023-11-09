@@ -30,6 +30,14 @@ while getopts ":hn:r:t:T:e:" option; do
     esac
 done
 
+output_mounted=`mount | grep mount | grep /output`
+
+if [ -z "$output_mounted" ] || ! [ -w "/output" ]
+then
+    echo "The /output volume is not mounted or is not writeable."
+    echo "Please mount it from the docker run command if you want access to files locally."
+fi
+
 sim_file=ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}.root
 echo $sim_file
 
@@ -42,5 +50,13 @@ fire /LDMX_eN_GENIE/ldmxsw_configs/genie_reco_only.py -i $sim_file -o $reco_file
 python3 /LDMX_eN_GENIE/analysis/ldmx_analysis.py -i $reco_file
 
 ls -l *.root
-
 rm $sim_file
+
+if [ -z "$output_mounted" ] || ! [ -w "/output" ]
+then
+    echo "The /output volume is not mounted or is not writeable."
+    echo "Please mount it from the docker run command if you want access to files locally."
+else
+    echo "Moving files to /output directory"
+    mv *.root /output/
+fi

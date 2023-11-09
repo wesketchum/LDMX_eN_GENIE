@@ -6,9 +6,10 @@
 FROM ghcr.io/wesketchum/ldmxsw:latest
 
 ARG NPROC=1
+ARG LDMX_SW_DIR=.
 
 # install ldmx-sw into the container at /usr/local
-COPY ldmx-sw /code
+COPY $LDMX_SW_DIR /code
 RUN mkdir -p /code/build &&\
     rm -rf /code/build/* &&\
     /etc/entry.sh /code/build cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. &&\
@@ -24,14 +25,18 @@ RUN wget -q https://github.com/wesketchum/ldmx-genie-splines/archive/refs/heads/
     tar xzf main.tar.gz --strip-components 1
 
 #pull down LDMX_eN_GENIE
-#WORKDIR /LDMX_eN_GENIE
-#RUN wget -q https://github.com/wesketchum/LDMX_eN_GENIE/archive/refs/heads/main.tar.gz &&\
-#    tar xzf main.tar.gz --strip-components 1
-#WORKDIR /LDMX_eN_GENIE
-COPY LDMX_eN_GENIE /LDMX_eN_GENIE
+WORKDIR /LDMX_eN_GENIE
+RUN wget -q https://github.com/wesketchum/LDMX_eN_GENIE/archive/refs/heads/main.tar.gz &&\
+    tar xzf main.tar.gz --strip-components 1
+#COPY LDMX_eN_GENIE /LDMX_eN_GENIE
 
-#directory for placing output. Needs to be mounted.
-#VOLUME /output
+#need to make executable script executable
+RUN chmod a+x /LDMX_eN_GENIE/scripts/run_genie_sim_and_reco.sh
 
-WORKDIR /
+#make an output directory that can be mounted
+VOLUME /output
+
+#working area. Needs to be non-root-user writeable
+WORKDIR /work
+RUN chmod a+rwX -R /work
 ENTRYPOINT ["/etc/entry.sh",".","/LDMX_eN_GENIE/scripts/run_genie_sim_and_reco.sh"]

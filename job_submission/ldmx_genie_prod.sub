@@ -12,8 +12,8 @@ output_destination      = /eos/user/w/wketchum/ldmx_en_samples/production_7Nov20
 MY.XRDCP_CREATE_DIR     = True
 
 request_cpus   = 1
-request_memory = 1024
-request_disk   = 10240
+request_memory = 1024M
+request_disk   = 10240M
 
 +MaxRuntime   = 7200
 +Requirements = OpSysAndVer =?= "CentOS7"
