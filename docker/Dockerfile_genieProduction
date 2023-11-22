@@ -25,16 +25,20 @@ RUN wget -q https://github.com/wesketchum/ldmx-genie-splines/archive/refs/heads/
     tar xzf main.tar.gz --strip-components 1
 
 #pull down LDMX_eN_GENIE
-WORKDIR /LDMX_eN_GENIE
-RUN wget -q https://github.com/wesketchum/LDMX_eN_GENIE/archive/refs/heads/main.tar.gz &&\
-    tar xzf main.tar.gz --strip-components 1
-#COPY LDMX_eN_GENIE /LDMX_eN_GENIE
+#WORKDIR /LDMX_eN_GENIE
+#RUN wget -q https://github.com/wesketchum/LDMX_eN_GENIE/archive/refs/heads/main.tar.gz &&\
+#    tar xzf main.tar.gz --strip-components 1
+COPY LDMX_eN_GENIE /LDMX_eN_GENIE
 
 #need to make executable script executable
 RUN chmod a+x /LDMX_eN_GENIE/scripts/run_genie_sim_and_reco.sh
 
 #make an output directory that can be mounted
 VOLUME /output
+
+#a hack to make the condor area writable...
+RUN mkdir -p /pool/condor &&\
+    chmod a+rwX -R /pool
 
 #working area. Needs to be non-root-user writeable
 WORKDIR /work

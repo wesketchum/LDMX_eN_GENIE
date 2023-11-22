@@ -19,7 +19,7 @@ while getopts ":hn:r:t:T:e:" option; do
 	    Help
 	    exit;;
 	n) N_EVENTS=$OPTARG;;
-	r) RUN=$OPTARG;;
+	r) RUN=$(($OPTARG+100));;
 	t) TARGET=$OPTARG;;
 	T) TUNE=$OPTARG;;
 	e) ENERGY=$OPTARG;;
@@ -36,12 +36,14 @@ if [ -z "$output_mounted" ] || ! [ -w "/output" ]
 then
     echo "The /output volume is not mounted or is not writeable."
     echo "Please mount it from the docker run command if you want access to files locally."
+else
+    echo "We can write to the /output area."
 fi
 
 sim_file=ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}.root
 echo $sim_file
 
-fire /LDMX_eN_GENIE/ldmxsw_configs/genie_sim.py -n $N_EVENTS -r $RUN --target $TARGET --tune $TUNE --energy $ENERGY --genie_splines /ldmx-genie-splines --output $sim_file --genie_messenger_xml /LDMX_eN_GENIE/ldmxsw_configs/Messenger_ErrorOnly.xml
+fire /LDMX_eN_GENIE/ldmxsw_configs/genie_sim.py -v 1 -n $N_EVENTS -r $RUN --target $TARGET --tune $TUNE --energy $ENERGY --genie_splines /ldmx-genie-splines --output $sim_file --genie_messenger_xml /LDMX_eN_GENIE/ldmxsw_configs/Messenger_ErrorOnly.xml
 
 reco_file=ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}_reco.root
 echo $reco_file
