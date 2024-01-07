@@ -1,24 +1,23 @@
-#container_image         = docker://ghcr.io/wesketchum/ldmxsw_genie_prod:prod
 universe                = vanilla
 
 executable              = run_genie_production_apptainer.sh
-arguments               = -n 20000 -p $(ProcId) -c $(ClusterId) -t Ti -T G18_02a_02_11b -e 8 -o production_7Nov2023
+#arguments               = -n 20000 -p $(ProcId) -c $(ClusterId) -t Ti -T G18_02a_02_11b -e 8 -o /eos/user/w/wketchum/ldmx_en_samples/production_07Jan2024
+arguments               = -n 100 -p $(ProcId) -c 100000 -t Ti -T G18_02a_02_11b -e 8 -o /eos/user/w/wketchum/ldmx_en_samples/production_07Jan2024
 output                  = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).out
 error                   = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).err
 log                     = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).log
 
-should_transfer_files   = YES
-when_to_transfer_output = ON_EXIT
-output_destination      = root://eosuser.cern.ch//eos/user/w/wketchum/ldmx_en_samples/production_7Nov2023/
-MY.XRDCP_CREATE_DIR     = True
+#should_transfer_files   = YES
+#when_to_transfer_output = ON_EXIT
+#output_destination      = root://eosuser.cern.ch//eos/user/w/wketchum/ldmx_en_samples/production_7Nov2023/
+#MY.XRDCP_CREATE_DIR     = True
 
 request_cpus   = 1
 #request_memory = 2000M
 #request_disk   = 10240M
 
-#+MaxRuntime   = 7200
-#+Requirements = OpSysAndVer =?= "CentOS7"
-+JobFlavour  = "workday"
++MaxRuntime   = 3600
+#+JobFlavour  = "workday"
 
-should_transfer_files = yes
-queue 100
+#queue 100
+queue 10

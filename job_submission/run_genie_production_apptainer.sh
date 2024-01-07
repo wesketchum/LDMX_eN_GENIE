@@ -31,13 +31,7 @@ while getopts ":hn:t:T:e:c:p:o:" option; do
 done
 
 RUN=$((CLUSTER_ID+PROC_ID))
-TMP_OUTDIR=./ldmx_genie_output_run_${RUN}_${CLUSTER_ID}_${PROC_ID}
 
-mkdir -p $TMP_OUTDIR
+apptainer run docker://ghcr.io/wesketchum/ldmxsw_genie_prod:latest -n $N_EVENTS -r $RUN -t $TARGET -T $TUNE -e $ENERGY
 
-apptainer run -B $TMP_OUTDIR:/output:rw docker://ghcr.io/wesketchum/ldmxsw_genie_prod:prod -n $N_EVENTS -r $RUN -t $TARGET -T $TUNE -e $ENERGY
-
-mv *.root $TMP_OUTDIR
-
-tar -czf ldmx_genie_output_run_${RUN}_${CLUSTER_ID}_${PROC_ID}.tgz $TMP_OUTDIR
-eos cp ldmx_genie_output_run_${RUN}_${CLUSTER_ID}_${PROC_ID}.tgz $EOS_OUTDIR
+eos cp ldmx_genie_output_*.tgz $EOS_OUTDIR/

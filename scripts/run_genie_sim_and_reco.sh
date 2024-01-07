@@ -19,7 +19,7 @@ while getopts ":hn:r:t:T:e:" option; do
 	    Help
 	    exit;;
 	n) N_EVENTS=$OPTARG;;
-	r) RUN=$(($OPTARG+100));;
+	r) RUN=$OPTARG;;
 	t) TARGET=$OPTARG;;
 	T) TUNE=$OPTARG;;
 	e) ENERGY=$OPTARG;;
@@ -30,35 +30,21 @@ while getopts ":hn:r:t:T:e:" option; do
     esac
 done
 
-output_mounted=`mount | grep mount | grep /output`
+TMP_OUTDIR=./ldmx_genie_output_run_${RUN}
+mkdir -p $TMP_OUTDIR
 
-if [ -z "$output_mounted" ] || ! [ -w "/output" ]
-then
-    echo "The /output volume is not mounted or is not writeable."
-    echo "Please mount it from the docker run command if you want access to files locally."
-else
-    echo "We can write to the /output area."
-fi
-
-sim_file=ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}.root
+sim_file=$TMP_OUTDIR/ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}.root
 echo $sim_file
 
-fire /LDMX_eN_GENIE/ldmxsw_configs/genie_sim.py -v 1 -n $N_EVENTS -r $RUN --target $TARGET --tune $TUNE --energy $ENERGY --genie_splines /ldmx-genie-splines --output $sim_file --genie_messenger_xml /LDMX_eN_GENIE/ldmxsw_configs/Messenger_ErrorOnly.xml
+fire /LDMX_eN_GENIE/ldmxsw_configs/genie_sim.py -n $N_EVENTS -r $RUN --target $TARGET --tune $TUNE --energy $ENERGY --genie_splines /ldmx-genie-splines --output $sim_file --genie_messenger_xml /LDMX_eN_GENIE/ldmxsw_configs/Messenger_ErrorOnly.xml
 
-reco_file=ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}_reco.root
+reco_file=$TMP_OUTDIR/ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}_reco.root
 echo $reco_file
 fire /LDMX_eN_GENIE/ldmxsw_configs/genie_reco_only.py -i $sim_file -o $reco_file
 
 python3 /LDMX_eN_GENIE/analysis/ldmx_analysis.py -i $reco_file
 
-ls -l *.root
 rm $sim_file
 
-if [ -z "$output_mounted" ] || ! [ -w "/output" ]
-then
-    echo "The /output volume is not mounted or is not writeable."
-    echo "Please mount it from the docker run command if you want access to files locally."
-else
-    echo "Moving files to /output directory"
-    mv *.root /output/
-fi
+tar -czf ldmx_genie_output_run_${RUN}.tgz $TMP_OUTDIR
+rm -rf $TMP_OUTDIR
