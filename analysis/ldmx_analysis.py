@@ -70,6 +70,22 @@ def process_file(ifile):
 
         variables["run"][0] = event.EventHeader.getRun()
         variables["event"][0] = event.EventHeader.getEventNumber()
+
+        variables["genie_tgtZ"][0] = event.SimGTruth_genie.ftgtZ
+        variables["genie_tgtA"][0] = event.SimGTruth_genie.ftgtA
+        variables["genie_scatter"][0] = event.SimGTruth_genie.fGscatter
+        variables["genie_resnum"][0] = event.SimGTruth_genie.fResNum
+        variables["genie_hitnuc_pdg"][0] = event.SimGTruth_genie.fHitNucPDG
+        variables["genie_hitqrk_pdg"][0] = event.SimGTruth_genie.fHitQrkPDG
+        variables["genie_hitnuc_px"][0] = event.SimGTruth_genie.fHitNuc_px
+        variables["genie_hitnuc_py"][0] = event.SimGTruth_genie.fHitNuc_py
+        variables["genie_hitnuc_pz"][0] = event.SimGTruth_genie.fHitNuc_pz
+        variables["genie_hitnuc_e"][0] = event.SimGTruth_genie.fHitNuc_e
+
+        variables["genie_qel"][0] = (variables["genie_scatter"][0]==1)
+        variables["genie_dis"][0] = (variables["genie_scatter"][0]==3)
+        variables["genie_res"][0] = (variables["genie_scatter"][0]==4)
+        variables["genie_mec"][0] = (variables["genie_scatter"][0]==10)
         
         n_sim_p = 0
         sim_p_id_dict = { }
@@ -236,6 +252,21 @@ var_dict = {
     "elec_p": (1,"D"),
     "elec_e": (1,"D"),
     "elec_thetaz": (1,"D"),
+
+    "genie_tgtZ": (1,"I"),
+    "genie_tgtA": (1,"I"),
+    "genie_scatter": (1,"I"),
+    "genie_qel": (1,"I"),
+    "genie_dis": (1,"I"),
+    "genie_res": (1,"I"),
+    "genie_mec": (1,"I"),
+    "genie_resnum": (1,"I"),
+    "genie_hitnuc_pdg": (1,"I"),
+    "genie_hitqrk_pdg": (1,"I"),
+    "genie_hitnuc_px": (1,"D"),
+    "genie_hitnuc_py": (1,"D"),
+    "genie_hitnuc_pz": (1,"D"),
+    "genie_hitnuc_e": (1,"D"),
 
     "n_sim_p": (1,"I"),
     "sim_p_id": ("n_sim_p","I"),
