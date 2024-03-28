@@ -34,4 +34,5 @@ RUN=$((CLUSTER_ID+PROC_ID))
 
 apptainer run docker://ghcr.io/wesketchum/ldmxsw_genie_prod:latest -n $N_EVENTS -r $RUN -t $TARGET -T $TUNE -e $ENERGY
 
-eos cp ldmx_genie_output_*.tgz $EOS_OUTDIR/
+eos cp ldmx_genie_output_run_${RUN}.tgz $EOS_OUTDIR/
+rm ldmx_genie_output_run_${RUN}.tgz
