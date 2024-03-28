@@ -3,7 +3,8 @@
 #   for the development image, look at the LDMX-Software/docker repo
 ###############################################################################
 
-FROM ghcr.io/wesketchum/ldmxsw:latest
+#FROM ghcr.io/wesketchum/ldmxsw:latest
+FROM ldmx/dev:4.2.1
 
 ARG NPROC=1
 ARG LDMX_SW_DIR=./ldmx-sw
