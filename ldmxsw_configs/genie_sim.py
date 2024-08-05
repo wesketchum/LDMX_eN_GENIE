@@ -66,11 +66,14 @@ else:
 from LDMX.Framework import ldmxcfg
 from LDMX.SimCore import generators
 from LDMX.SimCore import simulator
+from LDMX.SimCore import genie_reweight
 
 p=ldmxcfg.Process("genie")
 
 import LDMX.Ecal.EcalGeometry
 import LDMX.Hcal.HcalGeometry
+from LDMX.DQM import dqm
+
 
 sim = simulator.simulator('sim')
 sim.setDetector(det_name=DET_NAME,include_scoring_planes=True)
@@ -91,8 +94,17 @@ genie = generators.genie(name=f'genie_{TUNE}',
                               message_threshold_file=GENIE_MESSENGER_XML_FILE,
                               verbosity=VERBOSITY)
 
+genie_rw = genie_reweight.GenieReweightProducer(name='genie_reweight')
+genie_rw.hepmc3CollName="SimHepMC3Events"
+#genie_rw.hepmc3RunInfoCollName="SimHepMC3RunInfo"
+genie_rw.hepmc3PassName=""
+genie_rw.var_types = ["GENIE_INukeTwkDial_MFP_pi","GENIE_INukeTwkDial_MFP_N"]
+genie_rw.verbosity = 5
+
 sim.generators = [ genie ]
 p.sequence.append(sim)
+p.sequence.append(genie_rw)
+p.sequence.append( dqm.GenieTruthDQM(coll_name="SimHepMC3Events") )
 p.outputFiles=[OUTPUT_FILE_NAME]
 p.maxEvents = N_EVENTS
 p.run = RUN

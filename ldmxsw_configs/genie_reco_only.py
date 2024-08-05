@@ -126,6 +126,6 @@ p.sequence.extend([ digiRecoil,
                     truth_tracking,
                       #seederTagger, seederRecoil,
                       #tracking_tagger,
-                      tracking_recoil,
-                      recoil_dqm ])#, seed_recoil_dqm]
+                      tracking_recoil])
+#                      recoil_dqm ])#, seed_recoil_dqm]
 

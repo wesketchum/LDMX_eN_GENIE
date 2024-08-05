@@ -4,7 +4,7 @@
 ###############################################################################
 
 #FROM ghcr.io/wesketchum/ldmxsw:latest
-FROM ldmx/dev:4.2.1
+FROM ghcr.io/wesketchum/ldmx/dev:hepmc
 
 ARG NPROC=1
 ARG LDMX_SW_DIR=./ldmx-sw
