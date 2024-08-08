@@ -19,7 +19,7 @@ HIST_OUTPUT_FILE_NAME = OUTPUT_FILE_NAME[:len(OUTPUT_FILE_NAME)-len(output_file_
 
 from LDMX.Framework import ldmxcfg
 
-p=ldmxcfg.Process("genie_reco")
+p=ldmxcfg.Process("genie_reco_rerun")
 
 import LDMX.Ecal.EcalGeometry
 import LDMX.Hcal.HcalGeometry
@@ -33,20 +33,18 @@ p.histogramFile = HIST_OUTPUT_FILE_NAME
 #uses the run number as a seed by default. But if you want to set differently...
 #p.randomNumberSeedService.external(RUN) 
 
-
-
 ###reco parts
 import LDMX.Ecal.ecal_hardcoded_conditions
 import LDMX.Hcal.HcalGeometry
 import LDMX.Hcal.hcal_hardcoded_conditions
-import LDMX.Ecal.digi as ecal_digi
-import LDMX.Hcal.digi as hcal_digi
+import LDMX.Ecal.digi as ecal_digi_t
+import LDMX.Hcal.digi as hcal_digi_t
 
 p.sequence = [
-    ecal_digi.EcalDigiProducer(),
-    ecal_digi.EcalRecProducer(),
-    hcal_digi.HcalDigiProducer(),
-    hcal_digi.HcalRecProducer()
+    ecal_digi_t.EcalDigiProducer(),
+    ecal_digi_t.EcalRecProducer(),
+    hcal_digi_t.HcalDigiProducer(),
+    hcal_digi_t.HcalRecProducer()
 ]
 
 ###tracking parts
@@ -83,7 +81,7 @@ digiTagger.sigma_v = vSmearing
 # Smearing Processor - Recoil
 digiRecoil = tracking.DigitizationProcessor("DigitizationProcessorRecoil")
 digiRecoil.hit_collection = "RecoilSimHits"
-digiRecoil.out_collection = "DigiRecoilSimHits"
+digiRecoil.out_collection = "DigiRecoilSimHitsTest"
 digiRecoil.merge_hits = True
 digiRecoil.sigma_u = uSmearing
 digiRecoil.sigma_v = vSmearing
@@ -126,6 +124,6 @@ p.sequence.extend([ digiRecoil,
                     truth_tracking,
                       #seederTagger, seederRecoil,
                       #tracking_tagger,
-                      tracking_recoil,
-                      recoil_dqm ])#, seed_recoil_dqm]
+                      tracking_recoil ])
+                      #recoil_dqm ])#, seed_recoil_dqm]
 
