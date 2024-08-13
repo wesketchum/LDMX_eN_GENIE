@@ -7,11 +7,9 @@ parser.add_argument('-t','--target',default='Ti')
 parser.add_argument('-r','--run',default=100,type=int)
 parser.add_argument('--tune',default='G18_02a_02_11b')
 parser.add_argument('-v','--verbosity',default=0,type=int)
-parser.add_argument('-e', '--energy', default=4,type=int)
-parser.add_argument('-o','--output',default=None)
+parser.add_argument('--output_dir',default='./')
 parser.add_argument('--genie_splines',default='./')
 parser.add_argument('--genie_messenger_xml',default='./Messenger_ErrorOnly.xml')
-parser.add_argument('--prop_map',default='./propagationMap.root')
 
 arg = parser.parse_args()
 
@@ -21,23 +19,14 @@ TARGET=arg.target
 RUN=arg.run
 TUNE=arg.tune
 VERBOSITY=arg.verbosity
-OUTPUT_FILE_NAME=arg.output
-ENERGY=arg.energy
+OUTPUT_DIR=arg.output_dir
 
-if OUTPUT_FILE_NAME is None:
-    OUTPUT_FILE_NAME= f'ldmx_genie_{TUNE}_{TARGET}_{ENERGY}GeV_{RUN}.root'
-
-if OUTPUT_FILE_NAME[-5:]!=".root":
-    OUTPUT_FILE_NAME=OUTPUT_FILE_NAME+".root"
-
-output_file_name_local=OUTPUT_FILE_NAME.split("/")[-1]
-HIST_OUTPUT_FILE_NAME = OUTPUT_FILE_NAME[:len(OUTPUT_FILE_NAME)-len(output_file_name_local)]+output_file_name_local[:-5]+"_hist.root"
+OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_{TUNE}_{TARGET}_{RUN}.root'
+HIST_OUTPUT_FILE_NAME = f'{OUTPUT_DIR}/ldmx_genie_{TUNE}_{TARGET}_{RUN}_hist.root'
 
 #locations of things we need...
 PATH_TO_GENIE_SPLINES=arg.genie_splines
 GENIE_MESSENGER_XML_FILE=arg.genie_messenger_xml
-
-PROPAGATION_MAP=arg.prop_map
 
 #function for filling targets and abundances
 def get_targets(target_name):
@@ -60,57 +49,37 @@ def get_targets(target_name):
 
     return targets, abundances
 
-if ENERGY==4:
-    DET_NAME="ldmx-det-v14"
-elif ENERGY==8:
-    DET_NAME="ldmx-det-v14-8gev"
-else:
-    print("Energy must be 4 or 8 GeV!")
-    sys.exit()
-
 from LDMX.Framework import ldmxcfg
 from LDMX.SimCore import generators
 from LDMX.SimCore import simulator
-from LDMX.SimCore import genie_reweight
 
 p=ldmxcfg.Process("genie")
 
 import LDMX.Ecal.EcalGeometry
 import LDMX.Hcal.HcalGeometry
-from LDMX.DQM import dqm
 
 sim = simulator.simulator('sim')
-sim.setDetector(det_name=DET_NAME,include_scoring_planes=True)
+sim.setDetector(det_name='ldmx-det-v14',include_scoring_planes=True)
 
 targets, abundances = get_targets(TARGET)
 
-genie = generators.genie(name=f'genie_{TUNE}',
-                         energy = float(ENERGY),
-                         targets = targets,
-                         target_thickness = 0.3504,
-                         abundances = abundances,
-                         time = 0.0,
-                         position = [0.,0.,0.],
-                         beam_size = [ 20., 80. ],
-                         direction = [0.,0.,1.],
-                         tune=TUNE,
-                         spline_file=f'{PATH_TO_GENIE_SPLINES}/gxspl_emode_GENIE_v3_04_00.xml',
-                         message_threshold_file=GENIE_MESSENGER_XML_FILE,
-                         verbosity=VERBOSITY)
+genie_8GeV = generators.genie(name=f'genie_{TUNE}',
+                              energy = 8.0,
+                              targets = targets,
+                              target_thickness = 0.3504,
+                              abundances = abundances,
+                              time = 0.0,
+                              position = [0.,0.,0.],
+                              #beam_size = [0., 0.],
+                              beam_size = [ 20., 80. ],
+                              direction = [0.,0.,1.],
+                              tune=TUNE,
+                              spline_file=f'{PATH_TO_GENIE_SPLINES}/gxspl_emode_GENIE_v3_04_00.xml',
+                              message_threshold_file=GENIE_MESSENGER_XML_FILE,
+                              verbosity=VERBOSITY)
 
-genie_rw = genie_reweight.GenieReweightProducer(name='genie_reweight')
-genie_rw.hepmc3CollName="SimHepMC3Events"
-#genie_rw.hepmc3RunInfoCollName="SimHepMC3RunInfo"
-genie_rw.hepmc3PassName=""
-genie_rw.var_types = ["GENIE_INukeTwkDial_MFP_pi","GENIE_INukeTwkDial_MFP_N"]
-genie_rw.verbosity = VERBOSITY
-
-sim.generators = [ genie ]
-
+sim.generators = [ genie_8GeV ]
 p.sequence.append(sim)
-#p.sequence.append(genie_rw)
-p.sequence.append( dqm.GenieTruthDQM(coll_name="SimHepMC3Events") )
-
 p.outputFiles=[OUTPUT_FILE_NAME]
 p.maxEvents = N_EVENTS
 p.run = RUN
@@ -118,7 +87,8 @@ p.logFrequency = 1
 p.histogramFile = HIST_OUTPUT_FILE_NAME
 
 #uses the run number as a seed by default. But if you want to set differently...
-#p.randomNumberSeedService.external(RUN) 
+#p.randomNumberSeedService.external(RUN)
+
 
 ###reco parts
 import LDMX.Ecal.ecal_hardcoded_conditions
@@ -127,26 +97,11 @@ import LDMX.Hcal.hcal_hardcoded_conditions
 import LDMX.Ecal.digi as ecal_digi
 import LDMX.Hcal.digi as hcal_digi
 
-from LDMX.Hcal import hcal_trig_digi
-from LDMX.Ecal import ecal_trig_digi
-from LDMX.Trigger import trigger_energy_sums
-from LDMX.Recon import pfReco
-
-
-
 p.sequence.extend([
     ecal_digi.EcalDigiProducer(),
-    ecal_trig_digi.EcalTrigPrimDigiProducer(),
     ecal_digi.EcalRecProducer(),
     hcal_digi.HcalDigiProducer(),
-    hcal_trig_digi.HcalTrigPrimDigiProducer(),
-    hcal_digi.HcalRecProducer(),
-    trigger_energy_sums.EcalTPSelector(),
-    trigger_energy_sums.TrigEcalEnergySum(),
-    trigger_energy_sums.TrigHcalEnergySum(),
-    trigger_energy_sums.TrigEcalClusterProducer(),
-    trigger_energy_sums.TrigElectronProducer(propMapName=PROPAGATION_MAP),
-    pfReco.pfTruthProducer()
+    hcal_digi.HcalRecProducer()
 ])
 
 ###tracking parts
@@ -154,7 +109,7 @@ p.sequence.extend([
 from LDMX.Tracking import tracking
 from LDMX.Tracking import geo
 
-# Truth seeder 
+# Truth seeder
 truth_tracking           = tracking.TruthSeedProcessor()
 truth_tracking.debug             = True
 truth_tracking.trk_coll_name     = "RecoilTruthSeeds"
@@ -165,6 +120,7 @@ truth_tracking.track_id          = -1
 truth_tracking.p_cut             = 0.05 # In GeV
 truth_tracking.pz_cut            = 0.03
 truth_tracking.p_cutEcal         = 0. # In GeV
+#truth_tracking.n_min_hits_recoil = 3 #to match reducedGeometry
 
 #smearings
 uSmearing = 0.006       #mm #could bump up to 10 micron if we want
@@ -188,6 +144,18 @@ digiRecoil.merge_hits = True
 digiRecoil.sigma_u = uSmearing
 digiRecoil.sigma_v = vSmearing
 
+#Seed finder processor - Recoil
+seederRecoil = tracking.SeedFinderProcessor("SeedRecoil")
+seederRecoil.perigee_location = [0.,0.,0.]
+seederRecoil.input_hits_collection =  digiRecoil.out_collection
+seederRecoil.out_seed_collection = "RecoilRecoSeeds"
+seederRecoil.bfield = 1.5
+seederRecoil.pmin  = 0.1
+seederRecoil.pmax  = 8.
+seederRecoil.d0min = -0.5
+seederRecoil.d0max = 0.5
+seederRecoil.z0max = 10.
+
 #Recoil tracking
 #CKF Options
 tracking_recoil  = tracking.CKFProcessor("Recoil_TrackFinder")
@@ -207,6 +175,7 @@ tracking_recoil.trackID = -1 #1
 tracking_recoil.pdgID = -9999 #11
 tracking_recoil.measurement_collection = digiRecoil.out_collection
 tracking_recoil.min_hits = 6  #truth runs with at least 7 hits, so require the same here too
+#tracking_recoil.min_hits = 2 #to match the reduced Geometry
 
 from LDMX.Tracking import dqm
 digi_dqm = dqm.TrackerDigiDQM()
@@ -224,8 +193,7 @@ recoil_dqm.title = ""
 
 p.sequence.extend([ digiRecoil,
                     truth_tracking,
-                      #seederTagger, seederRecoil,
-                      #tracking_tagger,
-                      tracking_recoil ]),
-#                      recoil_dqm ])#, seed_recoil_dqm]
-
+                    #seederTagger, seederRecoil,
+                    #tracking_tagger,
+                    tracking_recoil]),
+#recoil_dqm ])#, seed_recoil_dqm]

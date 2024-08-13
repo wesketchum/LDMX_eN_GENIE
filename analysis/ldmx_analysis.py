@@ -49,6 +49,25 @@ SIM_PARTICLE_P_CUT = 1.00 #MeV, for status != 1
 
 VERBOSE = False
 
+def string_to_4vector(istring):
+    return np.array(istring.split(" "),dtype='f')
+
+def unpack_genie_interaction_attribute(hepmc_event,attr_name):
+    try:
+        if attr_name=="FSLepton":
+            pdg = 11
+        else:
+            pdg = int(hepmc_event.attribute_as_string(f"GENIE.Interaction.{attr_name}PDG"))
+        p4 = string_to_4vector(hepmc_event.attribute_as_string(f"GENIE.Interaction.{attr_name}P4"))
+        p4 = 1000*p4
+        return pdg, p4[0], p4[1], p4[2], p4[3]
+    except:
+        return 0, 0.0, 0.0, 0.0, 0.0
+
+GENIE_KVAR_SELX = 11
+GENIE_KVAR_SELY = 12
+GENIE_KVAR_SELQ2 = 13
+GENIE_KVAR_SELW = 15
 
 def process_file(ifile):
 
@@ -71,16 +90,46 @@ def process_file(ifile):
         variables["run"][0] = event.EventHeader.getRun()
         variables["event"][0] = event.EventHeader.getEventNumber()
 
-        variables["genie_tgtZ"][0] = event.SimGTruth_genie.ftgtZ
-        variables["genie_tgtA"][0] = event.SimGTruth_genie.ftgtA
-        variables["genie_scatter"][0] = event.SimGTruth_genie.fGscatter
-        variables["genie_resnum"][0] = event.SimGTruth_genie.fResNum
-        variables["genie_hitnuc_pdg"][0] = event.SimGTruth_genie.fHitNucPDG
-        variables["genie_hitqrk_pdg"][0] = event.SimGTruth_genie.fHitQrkPDG
-        variables["genie_hitnuc_px"][0] = event.SimGTruth_genie.fHitNuc_px
-        variables["genie_hitnuc_py"][0] = event.SimGTruth_genie.fHitNuc_py
-        variables["genie_hitnuc_pz"][0] = event.SimGTruth_genie.fHitNuc_pz
-        variables["genie_hitnuc_e"][0] = event.SimGTruth_genie.fHitNuc_e
+        hepmc_event = event.SimHepMC3Events_genie[0].getHepMCGenEvent()
+
+        (variables["genie_lep_i_pdg"][0],
+         variables["genie_lep_i_px"][0],
+         variables["genie_lep_i_py"][0],
+         variables["genie_lep_i_pz"][0],
+         variables["genie_lep_i_e"][0]) = unpack_genie_interaction_attribute(hepmc_event,"Probe")
+
+        (variables["genie_lep_f_pdg"][0],
+         variables["genie_lep_f_px"][0],
+         variables["genie_lep_f_py"][0],
+         variables["genie_lep_f_pz"][0],
+         variables["genie_lep_f_e"][0]) = unpack_genie_interaction_attribute(hepmc_event,"FSLepton")
+
+        (variables["genie_tgt_pdg"][0],
+         variables["genie_tgt_px"][0],
+         variables["genie_tgt_py"][0],
+         variables["genie_tgt_pz"][0],
+         variables["genie_tgt_e"][0]) = unpack_genie_interaction_attribute(hepmc_event,"Target")
+
+        (variables["genie_hnuc_pdg"][0],
+         variables["genie_hnuc_px"][0],
+         variables["genie_hnuc_py"][0],
+         variables["genie_hnuc_pz"][0],
+         variables["genie_hnuc_e"][0]) = unpack_genie_interaction_attribute(hepmc_event,"HitNucleon")
+
+        variables["genie_scatter"][0] = int(hepmc_event.attribute_as_string("GENIE.Interaction.ScatteringType"))
+
+        kvar_labels = hepmc_event.attribute_as_string("GENIE.Interaction.KineVarLabels").split(" ")
+        kvar_vals = hepmc_event.attribute_as_string("GENIE.Interaction.KineVarValues").split(" ")
+
+        kvar_dict = {}
+        for i_k in range(len(kvar_labels)):
+            kvar_dict[int(kvar_labels[i_k])] = float(kvar_vals[i_k])
+
+        if (GENIE_KVAR_SELX in kvar_dict.keys()): variables["genie_x_bj"][0] = kvar_dict[GENIE_KVAR_SELX]
+        if (GENIE_KVAR_SELY in kvar_dict.keys()): variables["genie_y_inel"][0] = kvar_dict[GENIE_KVAR_SELY]
+        if (GENIE_KVAR_SELQ2 in kvar_dict.keys()): variables["genie_Q2"][0] = kvar_dict[GENIE_KVAR_SELQ2]*1000
+        if (GENIE_KVAR_SELW in kvar_dict.keys()): variables["genie_W"][0] = kvar_dict[GENIE_KVAR_SELW]*1000
+
 
         variables["genie_qel"][0] = (variables["genie_scatter"][0]==1)
         variables["genie_dis"][0] = (variables["genie_scatter"][0]==3)
@@ -253,20 +302,40 @@ var_dict = {
     "elec_e": (1,"D"),
     "elec_thetaz": (1,"D"),
 
-    "genie_tgtZ": (1,"I"),
-    "genie_tgtA": (1,"I"),
+    "genie_lep_i_pdg": (1,"I"),
+    "genie_lep_i_px": (1,"D"),
+    "genie_lep_i_py": (1,"D"),
+    "genie_lep_i_pz": (1,"D"),
+    "genie_lep_i_e": (1,"D"),
+
+    "genie_lep_f_pdg": (1,"I"),
+    "genie_lep_f_px": (1,"D"),
+    "genie_lep_f_py": (1,"D"),
+    "genie_lep_f_pz": (1,"D"),
+    "genie_lep_f_e": (1,"D"),
+
+    "genie_tgt_pdg": (1,"I"),
+    "genie_tgt_px": (1,"D"),
+    "genie_tgt_py": (1,"D"),
+    "genie_tgt_pz": (1,"D"),
+    "genie_tgt_e": (1,"D"),
+
+    "genie_hnuc_pdg": (1,"I"),
+    "genie_hnuc_px": (1,"D"),
+    "genie_hnuc_py": (1,"D"),
+    "genie_hnuc_pz": (1,"D"),
+    "genie_hnuc_e": (1,"D"),
+
     "genie_scatter": (1,"I"),
     "genie_qel": (1,"I"),
     "genie_dis": (1,"I"),
     "genie_res": (1,"I"),
     "genie_mec": (1,"I"),
-    "genie_resnum": (1,"I"),
-    "genie_hitnuc_pdg": (1,"I"),
-    "genie_hitqrk_pdg": (1,"I"),
-    "genie_hitnuc_px": (1,"D"),
-    "genie_hitnuc_py": (1,"D"),
-    "genie_hitnuc_pz": (1,"D"),
-    "genie_hitnuc_e": (1,"D"),
+
+    "genie_x_bj": (1,"D"),
+    "genie_y_inel": (1,"D"),
+    "genie_Q2": (1,"D"),
+    "genie_W": (1,"D"),
 
     "n_sim_p": (1,"I"),
     "sim_p_id": ("n_sim_p","I"),

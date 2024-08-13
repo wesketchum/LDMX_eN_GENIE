@@ -40,7 +40,7 @@ mkdir -p $TMP_OUTDIR
 
 reco_file=$TMP_OUTDIR/ldmx_genie_${TUNE}_${TARGET}_${ENERGY}GeV_${RUN}_reco.root
 echo $reco_file
-fire /LDMX_eN_GENIE/ldmxsw_configs/genie_sim_reco.py -n $N_EVENTS -r $RUN --target $TARGET --tune $TUNE --energy $ENERGY --genie_splines /ldmx-genie-splines --output $reco_file --genie_messenger_xml /LDMX_eN_GENIE/ldmxsw_configs/Messenger_ErrorOnly.xml
+fire /LDMX_eN_GENIE/ldmxsw_configs/genie_sim_reco.py -n $N_EVENTS -r $RUN --target $TARGET --tune $TUNE --energy $ENERGY --genie_splines /ldmx-genie-splines --output $reco_file --genie_messenger_xml /LDMX_eN_GENIE/ldmxsw_configs/Messenger_ErrorOnly.xml --prop_map /LDMX_eN_GENIE/propagationMap.root
 
 python3 /LDMX_eN_GENIE/analysis/ldmx_analysis.py -i $reco_file
 

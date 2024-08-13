@@ -28,6 +28,7 @@ WORKDIR /LDMX_eN_GENIE
 COPY scripts /LDMX_eN_GENIE/scripts
 COPY ldmxsw_configs /LDMX_eN_GENIE/ldmxsw_configs
 COPY analysis /LDMX_eN_GENIE/analysis
+COPY propagationMap.root /LDMX_eN_GENIE/propagationMap.root
 
 #need to make executable script executable
 RUN chmod a+x /LDMX_eN_GENIE/scripts/run_genie_sim_and_reco.sh
