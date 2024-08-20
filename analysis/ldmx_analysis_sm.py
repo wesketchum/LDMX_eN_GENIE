@@ -12,6 +12,8 @@ import libDetDescr
 #returns e_cal vector, total energy, dictionary of energy contributions by given list of IDs, and unmatched energy
 def process_sim_edeps(calhits,p_ids,section=-1):
 
+    #print(f"Processing section {section}")
+
     sim_cal_e_vec = np.array([0.,0.,0.])
     total_sim_cal_e = 0.0
     sim_cal_e_unmatched = 0.0
@@ -19,7 +21,9 @@ def process_sim_edeps(calhits,p_ids,section=-1):
     cntrb_edep_dict = dict.fromkeys(p_ids,0.0)
     
     for i_h, calhit in enumerate(calhits):
-        if(section!=-1 and ( (calhit.getID() >> 18) & 0x7)!=section):
+        this_section = (calhit.getID() >> 18) & 0x7
+        #print(f"\thit {i_h}: e={calhit.getEdep()}, section={this_section}")
+        if(section!=-1 and this_section!=section):
             continue
         hit_pos = calhit.getPosition()
         sim_cal_e_vec[0] += calhit.getEdep()*hit_pos[0]
@@ -34,6 +38,7 @@ def process_sim_edeps(calhits,p_ids,section=-1):
             else:
                 sim_cal_e_unmatched += cntrb.edep
 
+    #print(f"Total energy={total_sim_cal_e}, Total unmatched={sim_cal_e_unmatched}")
     return sim_cal_e_vec, total_sim_cal_e, cntrb_edep_dict, sim_cal_e_unmatched
 
 def process_sim_edeps_lw(ecalhits,p_ids):
@@ -140,7 +145,7 @@ def pi0_photon_sorter(ecal_e_lw,hcal_e):
     else:
         return 0
 
-FILES = ['Data/ldmx_genie_output_run_101010/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101010_reco.root']
+FILES = ['/Users/wketchum/Data/LDMX/production_02Aug2024/ldmx_genie_output_run_110000/ldmx_genie_G18_02a_02_11b_Ti_8GeV_110000_reco.root']
 #	'ldmx_genie_output_run_101011/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101011_reco.root',
 #	'ldmx_genie_output_run_101012/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101012_reco.root',
 #	'ldmx_genie_output_run_101013/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101013_reco.root',
@@ -373,8 +378,8 @@ for f in FILES:
     odd_num_ph = []
 
     for ie, event in enumerate(input_tree):#        if(event.EventHeader.getEventNumber()>=15):
-        if(event.EventHeader.getEventNumber()>=15):
-            break
+        #if(event.EventHeader.getEventNumber()>=30):
+        #    break
         if(ie!=0 and ie%1000==0):
             print(f'\tProcessing event {ie}')
         
@@ -564,32 +569,36 @@ for f in FILES:
         #ecal layer weights
         total_sim_ecal_e_lw, sim_ecal_cntrb_edep_dict_lw, sim_ecal_e_um_lw = process_sim_edeps_lw(event.EcalSimHits_genie,sim_p_id_dict.keys())
 
-#        for pid, edep_sum in sim_hcal_cntrb_edep_dict.items():
-#            variables["sim_p_hcal_e"][sim_p_id_dict[pid]] += edep_sum
-#
-#        for pid, edep_sum in sim_ecal_cntrb_edep_dict.items():
-#            variables["sim_p_ecal_e"][sim_p_id_dict[pid]] += edep_sum
-#
-#        for pid, edep_sum in sim_ecal_cntrb_edep_dict_lw.items():
-#            variables["sim_p_ecal_e_lw"][sim_p_id_dict[pid]] += edep_sum
-#
-#        for pid, edep_sum in sim_hcal_back_cntrb_edep_dict.items():
-#            variables["hcal_back_e"][sim_p_id_dict[pid]] += edep_sum
-#
-#        for pid, edep_sum in sim_hcal_top_cntrb_edep_dict.items():
-#            variables["hcal_top_e"][sim_p_id_dict[pid]] += edep_sum
-#
-#        for pid, edep_sum in sim_hcal_bottom_cntrb_edep_dict.items():
-#            variables["hcal_bottom_e"][sim_p_id_dict[pid]] += edep_sum
-#
-#        for pid, edep_sum in sim_hcal_right_cntrb_edep_dict.items():
-#            variables["hcal_right_e"][sim_p_id_dict[pid]] += edep_sum
-#
+        for pid, edep_sum in sim_hcal_cntrb_edep_dict.items():
+            variables["sim_p_hcal_e"][sim_p_id_dict[pid]] += edep_sum
+
+        for pid, edep_sum in sim_ecal_cntrb_edep_dict.items():
+            variables["sim_p_ecal_e"][sim_p_id_dict[pid]] += edep_sum
+
+        for pid, edep_sum in sim_ecal_cntrb_edep_dict_lw.items():
+            variables["sim_p_ecal_e_lw"][sim_p_id_dict[pid]] += edep_sum
+
+        for pid, edep_sum in sim_hcal_back_cntrb_edep_dict.items():
+            variables["hcal_back_e"][sim_p_id_dict[pid]] += edep_sum
+
+        for pid, edep_sum in sim_hcal_top_cntrb_edep_dict.items():
+            variables["hcal_top_e"][sim_p_id_dict[pid]] += edep_sum
+
+        for pid, edep_sum in sim_hcal_bottom_cntrb_edep_dict.items():
+            variables["hcal_bottom_e"][sim_p_id_dict[pid]] += edep_sum
+
+        for pid, edep_sum in sim_hcal_right_cntrb_edep_dict.items():
+            variables["hcal_right_e"][sim_p_id_dict[pid]] += edep_sum
+
         for pid, edep_sum in sim_hcal_left_cntrb_edep_dict.items():
             variables["hcal_left_e"][sim_p_id_dict[pid]] += edep_sum
-            print(sim_hcal_left_cntrb_edep_dict)
+            #print(sim_hcal_left_cntrb_edep_dict)
 
-        recoil_hits_dict = recoil_nhits(event.RecoilTracks_genie_reco,sim_p_id_dict.keys())
+        #print(sim_hcal_top_cntrb_edep_dict)
+        #print(sim_hcal_bottom_cntrb_edep_dict)
+        #print(sim_hcal_right_cntrb_edep_dict)
+        #print(sim_hcal_left_cntrb_edep_dict)
+        recoil_hits_dict = recoil_nhits(event.RecoilTracks_genie,sim_p_id_dict.keys())
 
         for pid, nhits in recoil_hits_dict.items():
             variables["recoil_nhits"][sim_p_id_dict[pid]] = nhits
