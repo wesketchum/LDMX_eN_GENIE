@@ -474,6 +474,11 @@ for f in FILES:
                 variables["sim_p_hcal_e"][n_sim_p] = 0.0
                 variables["sim_p_ecal_e"][n_sim_p] = 0.0
                 variables["sim_p_ecal_e_lw"][n_sim_p] = 0.0
+                variables["hcal_back_e"][n_sim_p] = 0.0
+                variables["hcal_right_e"][n_sim_p] = 0.0
+                variables["hcal_top_e"][n_sim_p] = 0.0
+                variables["hcal_bottom_e"][n_sim_p] = 0.0
+                variables["hcal_left_e"][n_sim_p] = 0.0
 
                 #fill parent info
                 p_id = particle.getParents()[0]
