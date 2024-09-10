@@ -83,46 +83,25 @@ def recoil_nhits(recoiltracks,p_ids):
 # pi0 photon energy correction funcitions
 ECAL_CF_LW = 1.60
 #HCAL_CF = [9.25,10.27,9.81,9.83,9.74,9.57,8.99,9.91]
-HCAL_CF = [22., 11.1, 8.9, 8.4, 8.]
+HCAL_CF = [50,21.85,10.92,8.95,8.25,8.05]
 
 def ecal_corrected_energy(e):
-#def ecal_corrected_energy(e,ph):
-    #return ECAL_CF_LW*e[ph[0]]
     return ECAL_CF_LW*e
-
-#def hcal_corrected_energy(e,ph):
-#def hcal_corrected_energy(e):
-#    if(e>=0 and e<100):
-#        return HCAL_CF[0]*e
-#    if(e>=100 and e<200):
-#        return HCAL_CF[1]*e
-#    if(e>=200 and e<300):
-#        return HCAL_CF[2]*e
-#    if(e>=300 and e<400):
-#        return HCAL_CF[3]*e
-#    if(e>=400 and e<500):
-#        return HCAL_CF[4]*e
-#    if(e>=500 and e<600):
-#        return HCAL_CF[5]*e
-#    if(e>=600 and e<800):
-#        return HCAL_CF[6]*e
-#    if(e>=800):
-#        return HCAL_CF[7]*e
 
 # def hcal energy as a function of deposited energy
 def hcal_corrected_energy(e):
     if(e<1.5):
-        return 25.*e
-    if(e>=1.5 and e<10):
         return HCAL_CF[0]*e
-    if(e>=10 and e<20):
+    if(e>=1.5 and e<10):
         return HCAL_CF[1]*e
-    if(e>=20 and e<30):
+    if(e>=10 and e<20):
         return HCAL_CF[2]*e
-    if(e>=30 and e<40):
+    if(e>=20 and e<30):
         return HCAL_CF[3]*e
-    if(e>=40):
+    if(e>=30 and e<40):
         return HCAL_CF[4]*e
+    if(e>=40):
+        return HCAL_CF[5]*e
     
 ELECTRON_PT_CUT = 0.
 HCAL_PE_CUT = 0.
@@ -145,7 +124,7 @@ def pi0_photon_sorter(ecal_e_lw,hcal_e):
     else:
         return 0
 
-FILES = ['/Users/wketchum/Data/LDMX/production_02Aug2024/ldmx_genie_output_run_110000/ldmx_genie_G18_02a_02_11b_Ti_8GeV_110000_reco.root']
+#FILES = ['ldmx_genie_output_run_101010/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101010_reco.root',
 #	'ldmx_genie_output_run_101011/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101011_reco.root',
 #	'ldmx_genie_output_run_101012/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101012_reco.root',
 #	'ldmx_genie_output_run_101013/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101013_reco.root',
@@ -169,36 +148,53 @@ FILES = ['/Users/wketchum/Data/LDMX/production_02Aug2024/ldmx_genie_output_run_1
 #	'ldmx_genie_output_run_101031/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101031_reco.root',
 #	'ldmx_genie_output_run_101032/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101032_reco.root',
 #	'ldmx_genie_output_run_101034/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101034_reco.root',
-#	'ldmx_genie_output_run_101035/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101035_reco.root',
-#	'ldmx_genie_output_run_101036/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101036_reco.root',
-#	'ldmx_genie_output_run_101037/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101037_reco.root',
-#	'ldmx_genie_output_run_101038/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101038_reco.root',
-#	'ldmx_genie_output_run_101039/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101039_reco.root',
-#	'ldmx_genie_output_run_101040/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101040_reco.root',
-#	'ldmx_genie_output_run_101042/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101042_reco.root',
-#	'ldmx_genie_output_run_101043/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101043_reco.root',
-#	'ldmx_genie_output_run_101044/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101044_reco.root',
-#	'ldmx_genie_output_run_101045/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101045_reco.root',
-#	'ldmx_genie_output_run_101046/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101046_reco.root',
-#	'ldmx_genie_output_run_101047/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101047_reco.root',
-#	'ldmx_genie_output_run_101048/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101048_reco.root',
-#	'ldmx_genie_output_run_101049/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101049_reco.root',
-#	'ldmx_genie_output_run_101050/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101050_reco.root',
-#	'ldmx_genie_output_run_101051/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101051_reco.root',
-#	'ldmx_genie_output_run_101052/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101052_reco.root',
-#	'ldmx_genie_output_run_101053/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101053_reco.root',
-#	'ldmx_genie_output_run_101054/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101054_reco.root',
-#	'ldmx_genie_output_run_101055/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101055_reco.root',
-#	'ldmx_genie_output_run_101056/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101056_reco.root',
-#	'ldmx_genie_output_run_101057/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101057_reco.root',
-#	'ldmx_genie_output_run_101058/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101058_reco.root',
-#	'ldmx_genie_output_run_101059/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101059_reco.root']
+
+FILES = ['ldmx_genie_G18_02a_00_000_Ti_301.root',
+    'ldmx_genie_G18_02a_00_000_Ti_315.root',
+    'ldmx_genie_G18_02a_00_000_Ti_329.root',
+    'ldmx_genie_G18_02a_00_000_Ti_302.root',
+    'ldmx_genie_G18_02a_00_000_Ti_316.root',
+    'ldmx_genie_G18_02a_00_000_Ti_330.root',
+    'ldmx_genie_G18_02a_00_000_Ti_303.root',
+    'ldmx_genie_G18_02a_00_000_Ti_317.root',
+    'ldmx_genie_G18_02a_00_000_Ti_331.root',
+    'ldmx_genie_G18_02a_00_000_Ti_304.root',
+    'ldmx_genie_G18_02a_00_000_Ti_318.root',
+    'ldmx_genie_G18_02a_00_000_Ti_332.root',
+    'ldmx_genie_G18_02a_00_000_Ti_305.root',
+    'ldmx_genie_G18_02a_00_000_Ti_319.root',
+    'ldmx_genie_G18_02a_00_000_Ti_333.root',
+    'ldmx_genie_G18_02a_00_000_Ti_306.root',
+    'ldmx_genie_G18_02a_00_000_Ti_320.root',
+    'ldmx_genie_G18_02a_00_000_Ti_334.root',
+    'ldmx_genie_G18_02a_00_000_Ti_307.root',
+    'ldmx_genie_G18_02a_00_000_Ti_321.root',
+    'ldmx_genie_G18_02a_00_000_Ti_335.root',
+    'ldmx_genie_G18_02a_00_000_Ti_308.root',
+    'ldmx_genie_G18_02a_00_000_Ti_322.root',
+    'ldmx_genie_G18_02a_00_000_Ti_336.root',
+    'ldmx_genie_G18_02a_00_000_Ti_309.root',
+    'ldmx_genie_G18_02a_00_000_Ti_323.root',
+    'ldmx_genie_G18_02a_00_000_Ti_337.root',
+    'ldmx_genie_G18_02a_00_000_Ti_310.root',
+    'ldmx_genie_G18_02a_00_000_Ti_324.root',
+    'ldmx_genie_G18_02a_00_000_Ti_338.root',
+    'ldmx_genie_G18_02a_00_000_Ti_311.root',
+    'ldmx_genie_G18_02a_00_000_Ti_325.root',
+    'ldmx_genie_G18_02a_00_000_Ti_339.root',
+    'ldmx_genie_G18_02a_00_000_Ti_312.root',
+    'ldmx_genie_G18_02a_00_000_Ti_326.root',
+    'ldmx_genie_G18_02a_00_000_Ti_340.root',
+    'ldmx_genie_G18_02a_00_000_Ti_313.root',
+    'ldmx_genie_G18_02a_00_000_Ti_327.root',
+    'ldmx_genie_G18_02a_00_000_Ti_314.root',
+    'ldmx_genie_G18_02a_00_000_Ti_328.root']
 
 EVENTS_TO_PROCESS = []
 
 VERBOSE = False
 
-OUTPUT_FILE = ROOT.TFile("output_file_31July_test.root","RECREATE")
+OUTPUT_FILE = ROOT.TFile("output_file_29Aug_4GeV_400k.root","RECREATE")
 
 #layer weight imported
 layerWeights = [2.312, 4.312, 6.522, 7.490, 8.595, 10.253, 10.915, 10.915, 10.915, 10.915, 10.915,
@@ -207,16 +203,6 @@ layerWeights = [2.312, 4.312, 6.522, 7.490, 8.595, 10.253, 10.915, 10.915, 10.91
                 18.539, 18.539, 9.938]
 mip_si_energy = 0.13 #MeV
 secondOrderEnergyCorrection = 4000./3940.5
-
-#hadron_dict = {
-#    "proton": [2212,-2212],
-#    "neutron": [2112,-2112],
-#    "piplus": [211],
-#    "piminus": [-211],
-#    "pi0": [111],
-#    "Kplus": [321],
-#    "Kminus": [-321],
-#    "K0": [311,-311] }
 
 hadron_list = {2212,-2212,2112,-2112,211,-211,111,321,-321,311,-311}
 
@@ -353,8 +339,9 @@ var_dict = {
     "delta_py": (1,"D"),
     "delta_pz": (1,"D"),
 
-    #recoil hits in tracker for charged particles
-    "recoil_nhits":("n_sim_p","I"),
+# toggle for 4GeV
+#    #recoil hits in tracker for charged particles
+#    "recoil_nhits":("n_sim_p","I"),
 
     #particle multiplicity
     "n_sim_prot": (1,"I"),
@@ -378,7 +365,7 @@ for f in FILES:
     odd_num_ph = []
 
     for ie, event in enumerate(input_tree):#        if(event.EventHeader.getEventNumber()>=15):
-        #if(event.EventHeader.getEventNumber()>=30):
+        #if(event.EventHeader.getEventNumber()>=10000):
         #    break
         if(ie!=0 and ie%1000==0):
             print(f'\tProcessing event {ie}')
@@ -507,23 +494,6 @@ for f in FILES:
 
                 variables["n_sim_pi0"][0] = n_pi0
 
-#		#particle multiplicity
-#                if(particle.getPdgID()==2212):
-#                    n_prot +=1
-#                variables["n_sim_prot"][0] = n_prot
-#
-#                if(particle.getPdgID()==2112):
-#                    n_neut +=1
-#                variables["n_sim_neut"][0] = n_neut
-#
-#                if(particle.getPdgID()==211):
-#                    n_pip +=1
-#                variables["n_sim_pip"][0] = n_pip
-#
-#                if(particle.getPdgID()==-211):
-#                    n_pim +=1
-#                variables["n_sim_pim"][0] = n_pim
-#
                 n_sim_p = n_sim_p+1
                 
         if(n_pi0>0):
@@ -588,6 +558,8 @@ for f in FILES:
 
         for pid, edep_sum in sim_hcal_top_cntrb_edep_dict.items():
             variables["hcal_top_e"][sim_p_id_dict[pid]] += edep_sum
+            if(variables["hcal_top_e"][sim_p_id_dict[pid]]>5000):
+                print(event.EventHeader.getEventNumber())
 
         for pid, edep_sum in sim_hcal_bottom_cntrb_edep_dict.items():
             variables["hcal_bottom_e"][sim_p_id_dict[pid]] += edep_sum
@@ -599,14 +571,11 @@ for f in FILES:
             variables["hcal_left_e"][sim_p_id_dict[pid]] += edep_sum
             #print(sim_hcal_left_cntrb_edep_dict)
 
-        #print(sim_hcal_top_cntrb_edep_dict)
-        #print(sim_hcal_bottom_cntrb_edep_dict)
-        #print(sim_hcal_right_cntrb_edep_dict)
-        #print(sim_hcal_left_cntrb_edep_dict)
-        recoil_hits_dict = recoil_nhits(event.RecoilTracks_genie,sim_p_id_dict.keys())
-
-        for pid, nhits in recoil_hits_dict.items():
-            variables["recoil_nhits"][sim_p_id_dict[pid]] = nhits
+# toggle for 4GeV
+#        recoil_hits_dict = recoil_nhits(event.RecoilTracks_genie,sim_p_id_dict.keys())
+#
+#        for pid, nhits in recoil_hits_dict.items():
+#            variables["recoil_nhits"][sim_p_id_dict[pid]] = nhits
 #            if(variables["recoil_nhits"][sim_p_id_dict[pid]]!=0):
 #                print(f'event is {event.EventHeader.getEventNumber()}')
 #                print(f'nhits is {variables["recoil_nhits"][sim_p_id_dict[pid]]}')
