@@ -8,14 +8,23 @@ import glob
 import argparse
 import sys
 
+
 parser = argparse.ArgumentParser()
 parser.add_argument('-i','--input',required=True)
 
 arg = parser.parse_args()
 
+#import libDetDescr
+LAYER_WEIGHTS = [2.312, 4.312, 6.522, 7.490, 8.595, 10.253, 10.915, 10.915, 10.915, 10.915, 10.915,
+                 10.915, 10.915, 10.915, 10.915, 10.915, 10.915, 10.915, 10.915, 10.915, 10.915,
+                 10.915, 10.915, 14.783, 18.539, 18.539, 18.539, 18.539, 18.539, 18.539, 18.539,
+                 18.539, 18.539, 9.938]
+MIP_SI_ENERGY = 0.13 #MeV
+ENERGY_CORRECTION = 4000./3940.5
+
 #common processing function for sim calhits
 #returns e_cal vector, total energy, dictionary of energy contributions by given list of IDs, and unmatched energy
-def process_sim_edeps(calhits,p_ids):
+def process_sim_edeps(calhits,p_ids,section=-1,use_layer_weights=False):
 
     sim_cal_e_vec = np.array([0.,0.,0.])
     total_sim_cal_e = 0.0
@@ -24,20 +33,62 @@ def process_sim_edeps(calhits,p_ids):
     cntrb_edep_dict = dict.fromkeys(p_ids,0.0)
     
     for i_h, calhit in enumerate(calhits):
+        this_section = (calhit.getID() >> 18) & 0x7
+
+        if(section!=-1 and this_section!=section):
+            continue
+
         hit_pos = calhit.getPosition()
-        sim_cal_e_vec[0] += calhit.getEdep()*hit_pos[0]
-        sim_cal_e_vec[1] += calhit.getEdep()*hit_pos[1]
-        sim_cal_e_vec[2] += calhit.getEdep()*hit_pos[2]
-        total_sim_cal_e += calhit.getEdep()
+        this_edep_e = calhit.getEdep()
+        this_edep_e_corr = 1.0;
+
+        if use_layer_weights:
+            this_layer_index = (calhit.getID() >> 17) & 0x3f
+            this_layer_weight = LAYER_WEIGHTS[this_layer_index]
+            this_edep_e_corr = (1+this_layer_weight/MIP_SI_ENERGY)*ENERGY_CORRECTION
+
+        sim_cal_e_vec[0] += this_edep_e*this_edep_e_corr*hit_pos[0]
+        sim_cal_e_vec[1] += this_edep_e*this_edep_e_corr*hit_pos[1]
+        sim_cal_e_vec[2] += this_edep_e*this_edep_e_corr*hit_pos[2]
+        total_sim_cal_e += this_edep_e*this_edep_e_corr
             
         for i_c in range(calhit.getNumberOfContribs()):
             cntrb = calhit.getContrib(i_c)
             if(cntrb.incidentID in p_ids):
-                cntrb_edep_dict[cntrb.incidentID] += cntrb.edep
+                cntrb_edep_dict[cntrb.incidentID] += cntrb.edep*this_edep_e_corr
             else:
-                sim_cal_e_unmatched += cntrb.edep
+                sim_cal_e_unmatched += cntrb.edep*this_edep_e_corr
 
     return sim_cal_e_vec, total_sim_cal_e, cntrb_edep_dict, sim_cal_e_unmatched
+
+# pi0 photon energy correction funcitions
+
+def ecal_corrected_energy(e,ECAL_CF_LW=1.60):
+    return ECAL_CF_LW*e
+
+# def hcal energy as a function of deposited energy
+def hcal_corrected_energy(e,HCAL_CF=[50,21.85,10.92,8.95,8.25,8.05]):
+    if(e<1.5):
+        return HCAL_CF[0]*e
+    if(e>=1.5 and e<10):
+        return HCAL_CF[1]*e
+    if(e>=10 and e<20):
+        return HCAL_CF[2]*e
+    if(e>=20 and e<30):
+        return HCAL_CF[3]*e
+    if(e>=30 and e<40):
+        return HCAL_CF[4]*e
+    if(e>=40):
+        return HCAL_CF[5]*e
+
+def pi0_photon_sorter(ecal_e_lw,hcal_e,ECAL_ENERGY_FRAC=0.9,ECAL_ENERGY_MIN=0.0,HCAL_ENERGY_FRAC=0.9,HCAL_ENERGY_MIN=0.500):
+    total_corrected_energy = ecal_corrected_energy(ecal_e_lw)+hcal_corrected_energy(hcal_e)
+    if(ecal_e_lw > ECAL_ENERGY_MIN and ecal_corrected_energy(ecal_e_lw)/total_corrected_energy > ECAL_ENERGY_FRAC):
+        return 1
+    elif(hcal_e > HCAL_ENERGY_MIN and hcal_corrected_energy(hcal_e)/total_corrected_energy > HCAL_ENERGY_FRAC):
+        return 2
+    else:
+        return 0
 
 ELECTRON_PT_CUT = 0.
 HCAL_PE_CUT = 0.
@@ -138,7 +189,14 @@ def process_file(ifile):
         
         n_sim_p = 0
         sim_p_id_dict = { }
-    
+        n_pi0 = 0
+        pi0_dict = {}
+        pi0_idx = []
+        n_prot = 0
+        n_neut = 0
+        n_pip = 0
+        n_pim = 0
+
         for i_p, particle in event.SimParticles_genie:
 
             mom = p(particle)
@@ -175,6 +233,12 @@ def process_file(ifile):
                 sim_p_id_dict[i_p] = n_sim_p
                 variables["sim_p_hcal_e"][n_sim_p] = 0.0
                 variables["sim_p_ecal_e"][n_sim_p] = 0.0
+                variables["sim_p_ecal_e_lw"][n_sim_p] = 0.0
+                variables["hcal_back_e"][n_sim_p] = 0.0
+                variables["hcal_right_e"][n_sim_p] = 0.0
+                variables["hcal_top_e"][n_sim_p] = 0.0
+                variables["hcal_bottom_e"][n_sim_p] = 0.0
+                variables["hcal_left_e"][n_sim_p] = 0.0
 
                 #fill parent info
                 p_id = particle.getParents()[0]
@@ -191,21 +255,74 @@ def process_file(ifile):
                     variables["sim_p_parent_e"][n_sim_p] = variables["sim_p_e"][p_my_id]
                     variables["sim_p_parent_m"][n_sim_p] = variables["sim_p_m"][p_my_id]
                     variables["sim_p_parent_q"][n_sim_p] = variables["sim_p_q"][p_my_id]
-                    variables["sim_p_parent_thetaz"][n_sim_p] = variables["sim_p_thetaz"][p_my_id]                    
-                
+                    variables["sim_p_parent_thetaz"][n_sim_p] = variables["sim_p_thetaz"][p_my_id]
+
+                if(particle.getPdgID()==111):
+                    variables["pi0_idx"][n_pi0] = n_sim_p#index of pi0 in our list
+                    pi0_dict[i_p] = []
+                    n_pi0 +=1
+                    pi0_idx.append(i_p)
+
                 n_sim_p = n_sim_p+1
             
         variables["n_sim_p"][0] = n_sim_p
+        variables["n_sim_pi0"][0] = n_pi0
+
+        if(n_pi0>0):
+            for x in range(n_sim_p):
+                if(variables["sim_p_pdg"][x]==22 and variables["sim_p_parent_pdg"][x]==111):# and variables["sim_p_parent_id"][n_sim_p]==x):
+                    if(variables["sim_p_parent_id"][x] in pi0_dict.keys()):
+                        pi0_dict[variables["sim_p_parent_id"][x]].append(x)
+
+            for my_pi0_id in range(len(pi0_idx)):
+                pi0idx = pi0_idx[my_pi0_id]
+                if((len(pi0_dict[pi0idx]))%2==0): # some weird length issue to resolve later
+                    if(variables["sim_p_e"][pi0_dict[pi0idx][0]] > variables["sim_p_e"][pi0_dict[pi0idx][1]]):
+                        variables["pi0_photon1_idx"][my_pi0_id] = pi0_dict[pi0idx][0]
+                        variables["pi0_photon2_idx"][my_pi0_id] = pi0_dict[pi0idx][1]
+                    elif(variables["sim_p_e"][pi0_dict[pi0idx][0]] < variables["sim_p_e"][pi0_dict[pi0idx][1]]):
+                        variables["pi0_photon1_idx"][my_pi0_id] = pi0_dict[pi0idx][1]
+                        variables["pi0_photon2_idx"][my_pi0_id] = pi0_dict[pi0idx][0]
+
+                elif((len(pi0_dict[pi0idx]))%2==1):
+                    odd_num_ph.append(event.EventHeader.getEventNumber())
 
         sim_hcal_e_vec, total_sim_hcal_e, sim_hcal_cntrb_edep_dict, sim_hcal_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys())
         sim_ecal_e_vec, total_sim_ecal_e, sim_ecal_cntrb_edep_dict, sim_ecal_e_um = process_sim_edeps(event.EcalSimHits_genie,sim_p_id_dict.keys())
 
+        sim_hcal_back_e_vec, total_sim_hcal_back_e, sim_hcal_back_cntrb_edep_dict, sim_hcal_back_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys(),section=0)
+        sim_hcal_top_e_vec, total_sim_hcal_top_e, sim_hcal_top_cntrb_edep_dict, sim_hcal_top_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys(),section=1)
+        sim_hcal_bottom_e_vec, total_sim_hcal_bottom_e, sim_hcal_bottom_cntrb_edep_dict, sim_hcal_bottom_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys(),section=2)
+        sim_hcal_right_e_vec, total_sim_hcal_right_e, sim_hcal_right_cntrb_edep_dict, sim_hcal_right_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys(),section=3)
+        sim_hcal_left_e_vec, total_sim_hcal_left_e, sim_hcal_left_cntrb_edep_dict, sim_hcal_left_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys(),section=4)
+
+        #ecal layer weights
+        total_sim_ecal_e_lw, sim_ecal_cntrb_edep_dict_lw, sim_ecal_e_um_lw = process_sim_edeps(event.EcalSimHits_genie,sim_p_id_dict.keys(),use_layer_weights=True)
+
         for pid, edep_sum in sim_hcal_cntrb_edep_dict.items():
             variables["sim_p_hcal_e"][sim_p_id_dict[pid]] += edep_sum
-
         for pid, edep_sum in sim_ecal_cntrb_edep_dict.items():
             variables["sim_p_ecal_e"][sim_p_id_dict[pid]] += edep_sum
-    
+        for pid, edep_sum in sim_ecal_cntrb_edep_dict_lw.items():
+            variables["sim_p_ecal_e_lw"][sim_p_id_dict[pid]] += edep_sum
+        for pid, edep_sum in sim_hcal_back_cntrb_edep_dict.items():
+            variables["hcal_back_e"][sim_p_id_dict[pid]] += edep_sum
+        for pid, edep_sum in sim_hcal_top_cntrb_edep_dict.items():
+            variables["hcal_top_e"][sim_p_id_dict[pid]] += edep_sum
+        for pid, edep_sum in sim_hcal_bottom_cntrb_edep_dict.items():
+            variables["hcal_bottom_e"][sim_p_id_dict[pid]] += edep_sum
+        for pid, edep_sum in sim_hcal_right_cntrb_edep_dict.items():
+            variables["hcal_right_e"][sim_p_id_dict[pid]] += edep_sum
+        for pid, edep_sum in sim_hcal_left_cntrb_edep_dict.items():
+            variables["hcal_left_e"][sim_p_id_dict[pid]] += edep_sum
+
+        # photon sorter
+        if(n_pi0>0):
+            for my_pi0_id in range(len(pi0_idx)):
+                if((len(pi0_dict[pi0idx]))%2==0):
+                    variables["pi0_photon1_det"][my_pi0_id] = pi0_photon_sorter(variables["sim_p_ecal_e_lw"][variables["pi0_photon1_idx"][my_pi0_id]],variables["sim_p_hcal_e"][variables["pi0_photon1_idx"][my_pi0_id]])
+                    variables["pi0_photon2_det"][my_pi0_id] = pi0_photon_sorter(variables["sim_p_ecal_e_lw"][variables["pi0_photon2_idx"][my_pi0_id]],variables["sim_p_hcal_e"][variables["pi0_photon2_idx"][my_pi0_id]])
+
         variables["sim_hcal_e"][0] = total_sim_hcal_e
         variables["sim_hcal_et"][0] = np.sqrt(sim_hcal_e_vec[0]*sim_hcal_e_vec[0]+sim_hcal_e_vec[1]*sim_hcal_e_vec[1])
         variables["sim_hcal_e_um"][0] = sim_hcal_e_um
@@ -351,6 +468,16 @@ var_dict = {
     "sim_p_q": ("n_sim_p","D"),
     "sim_p_thetaz": ("n_sim_p","D"),
 
+    #endpoint info (mm)
+    "sim_p_end_x": ("n_sim_p","D"),
+    "sim_p_end_y": ("n_sim_p","D"),
+    "sim_p_end_z": ("n_sim_p","D"),
+
+    #vertex info (mm)
+    "sim_p_vertex_x": ("n_sim_p","D"),
+    "sim_p_vertex_y": ("n_sim_p","D"),
+    "sim_p_vertex_z": ("n_sim_p","D"),
+
     #parent info
     "sim_p_parent_id": ("n_sim_p","I"),
     "sim_p_parent_status": ("n_sim_p","I"),
@@ -372,8 +499,21 @@ var_dict = {
 
     #edeps for unmatched particles
     "sim_ecal_e_um": (1,"D"),
-    "sim_hcal_e_um": (1,"D"),    
-    
+    "sim_hcal_e_um": (1,"D"),
+
+    #layer weight (lw) edep by particle in ecal
+    "sim_p_ecal_e_lw":("n_sim_p","D"),
+
+    #    #hcal back
+    "hcal_back_e": ("n_sim_p","D"),
+    #
+    #    #hcal side IDs
+    #    #Top = 1, Bottom = 2, Left = 4, Right = 3
+    "hcal_top_e": ("n_sim_p","D"),
+    "hcal_bottom_e": ("n_sim_p","D"),
+    "hcal_left_e": ("n_sim_p","D"),
+    "hcal_right_e": ("n_sim_p","D"),
+
     "sim_hcal_e": (1,"D"),
     "sim_hcal_et": (1,"D"),
     "sim_ecal_e": (1,"D"),
@@ -391,7 +531,27 @@ var_dict = {
 
     #total cal
     "cal_e": (1,"D"),
-    "cal_et": (1,"D")
+    "cal_et": (1,"D"),
+
+    #splitting pi0 photon kinematics
+    "n_sim_pi0": (1,"I"),
+    "pi0_idx": ("n_sim_pi0","I"),
+    "pi0_photon1_idx": ("n_sim_pi0","I"),
+    "pi0_photon2_idx": ("n_sim_pi0","I"),
+    "pi0_photon1_det": ("n_sim_pi0","I"), # 1 for mostly Ecal, 2 for mostly Hcal, 0 for neither
+    "pi0_photon2_det": ("n_sim_pi0","I"), # 1 for mostly Ecal, 2 for mostly Hcal, 0 for neither
+
+    #distance between ph t ns at face of ecal
+    "sim_p_ecalx": ("n_sim_p","D"),
+    "sim_p_ecaly": ("n_sim_p","D"),
+    "ecald_xy": ("n_sim_p","D"),
+    "t_param": ("n_sim_p","D"),
+
+    #particle multiplicity
+    "n_sim_prot": (1,"I"),
+    "n_sim_neut": (1,"I"),
+    "n_sim_pip": (1,"I"),
+    "n_sim_pim": (1,"I")
 }
 
 FILES = glob.glob(arg.input)
