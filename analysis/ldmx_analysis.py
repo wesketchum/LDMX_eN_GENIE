@@ -408,7 +408,50 @@ def process_file(ifile):
         variables["ecal_e"][0] = total_ecal_e
         variables["ecal_et"][0] = ecal_et
         variables["cal_e"][0] = total_cal_e
-        variables["cal_et"][0] = cal_et    
+        variables["cal_et"][0] = cal_et
+
+        max_layer = 0
+        for i_s, sum in enumerate(event.ecalTrigSums_genie):
+            if not sum.energy()>0.0: continue
+            if sum.layer()>=max_layer:
+                max_layer = sum.layer()+1
+            for i_layer in range(sum.layer()):
+                variables["trig_Ecal_e_afterLayer"][i_layer] += sum.energy()
+        variables["trig_Ecal_nLayer"][0] = max_layer
+
+        max_layer = 0
+        for i_s, sum in enumerate(event.hcalTrigQuadsBackLayerSums_genie):
+            if not sum.hwEnergy()>0.0: continue
+            if sum.layer()>=max_layer:
+                max_layer = sum.layer()+1
+            for i_layer in range(sum.layer()):
+                variables["trig_Hcal_e_afterLayer"][i_layer] += sum.hwEnergy()
+        variables["trig_Hcal_nLayer"][0] = max_layer
+
+        variables["trig_n_Electron"][0] = len(event.trigElectrons_genie)
+        variables["trig_maxE"][0] = -1
+        variables["trig_maxPt"][0] = -1
+        max_e_val = 0.0
+        max_pt_val = 0.0
+        for i_tE, tEle in enumerate(event.trigElectrons_genie):
+            if tEle.energy()>max_e_val:
+                max_e_val = tEle.energy()
+                variables["trig_maxE"][0] = i_tE
+            if tEle.pt()>max_pt_val:
+                max_pt_val = tEle.pt()
+                variables["trig_maxPt"][0] = i_tE
+            variables["trig_Electron_e"][i_tE] = tEle.energy()
+            variables["trig_Electron_eClus"][i_tE] = tEle.getClusEnergy()
+            variables["trig_Electron_zClus"][i_tE] = tEle.endz()
+            variables["trig_Electron_px"][i_tE] = tEle.px()
+            variables["trig_Electron_py"][i_tE] = tEle.py()
+            variables["trig_Electron_pz"][i_tE] = tEle.pz()
+            variables["trig_Electron_dx"][i_tE] = tEle.endx() - tEle.vx()
+            variables["trig_Electron_dy"][i_tE] = tEle.endy() - tEle.vy()
+            variables["trig_Electron_x"][i_tE] = tEle.vx()
+            variables["trig_Electron_y"][i_tE] = tEle.vy()
+            variables["trig_Electron_tp"][i_tE] = tEle.getClusTP()
+            variables["trig_Electron_depth"][i_tE] = tEle.getClusDepth()
 
         if(VERBOSE):
             print("List of particles:")
@@ -578,7 +621,31 @@ var_dict = {
     "n_sim_prot": (1,"I"),
     "n_sim_neut": (1,"I"),
     "n_sim_pip": (1,"I"),
-    "n_sim_pim": (1,"I")
+    "n_sim_pim": (1,"I"),
+
+    #trigger info
+    "trig_Ecal_nLayer": (1,"I"),
+    "trig_Ecal_e_afterLayer": ("trig_Ecal_nLayer","D"),
+
+    "trig_Hcal_nLayer": (1,"I"),
+    "trig_Hcal_e_afterLayer": ("trig_Ecal_nLayer","D"),
+
+    "trig_n_Electron": (1,"I"),
+    "trig_maxE": (1,"I"),
+    "trig_maxPt": (1,"I"),
+    "trig_Electron_e": ("trig_n_Electron","D"),
+    "trig_Electron_eClus": ("trig_n_Electron","D"),
+    "trig_Electron_zClus": ("trig_n_Electron","D"),
+    "trig_Electron_px": ("trig_n_Electron","D"),
+    "trig_Electron_py": ("trig_n_Electron","D"),
+    "trig_Electron_pz": ("trig_n_Electron","D"),
+    "trig_Electron_dx": ("trig_n_Electron","D"),
+    "trig_Electron_dy": ("trig_n_Electron","D"),
+    "trig_Electron_x": ("trig_n_Electron","D"),
+    "trig_Electron_y": ("trig_n_Electron","D"),
+    "trig_Electron_tp": ("trig_n_Electron","D"),
+    "trig_Electron_depth": ("trig_n_Electron","D")
+
 }
 
 FILES = glob.glob(arg.input)
