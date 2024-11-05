@@ -7,10 +7,9 @@
 FROM ghcr.io/wesketchum/ldmx/dev:hepmc
 
 ARG NPROC=1
-ARG LDMX_SW_DIR=./ldmx-sw
 
 # install ldmx-sw into the container at /usr/local and rebuild
-COPY $LDMX_SW_DIR /code
+COPY --from=ldmx-sw ldmx-sw /code
 RUN mkdir -p /code/build &&\
     rm -rf /code/build/* &&\
     /etc/entry.sh /code/build cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. &&\

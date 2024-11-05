@@ -117,7 +117,9 @@ if DO_SIM:
     sim.generators = [ genie ]
 
     p.sequence.append(sim)
-    p.sequence.append(genie_rw)
+    #only do RW if hA18 FSIs
+    if TUNE.split("_")[1][-1]=="a":
+        p.sequence.append(genie_rw)
     #p.sequence.append( dqm.GenieTruthDQM(coll_name="SimHepMC3Events") )
 
 if DO_RECO:
@@ -129,7 +131,7 @@ if DO_RECO:
     import LDMX.Ecal.digi as ecal_digi
     import LDMX.Ecal.vetos as ecal_vetos
     import LDMX.Hcal.digi as hcal_digi
-    import LDMX.Hcal.vetos as hcal_vetos
+    #import LDMX.Hcal.vetos as hcal_vetos
 
     from LDMX.Hcal import hcal_trig_digi
     from LDMX.Ecal import ecal_trig_digi

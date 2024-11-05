@@ -12,6 +12,7 @@ __pycache__
 **.root
 plots/
 **.jpg
+tmp**
 
 ldmxsw_docker/
 ldmx-sw/

@@ -229,6 +229,21 @@ def process_file(ifile):
                 variables["sim_p_q"][n_sim_p] = particle.getCharge()
                 variables["sim_p_thetaz"][n_sim_p] = thetaz(particle)
 
+                #endpoint info
+                variables["sim_p_end_x"][n_sim_p] = particle.getEndPoint()[0]
+                variables["sim_p_end_y"][n_sim_p] = particle.getEndPoint()[1]
+                variables["sim_p_end_z"][n_sim_p] = particle.getEndPoint()[2]
+
+                variables["sim_p_vertex_x"][n_sim_p] = particle.getVertex()[0]
+                variables["sim_p_vertex_y"][n_sim_p] = particle.getVertex()[1]
+                variables["sim_p_vertex_z"][n_sim_p] = particle.getVertex()[2]
+
+                #distance at ecal face variables
+                variables["t_param"][n_sim_p] = (240 - particle.getVertex()[2])/particle.getEndPoint()[2]
+                variables["sim_p_ecalx"][n_sim_p] = particle.getVertex()[0] + variables["t_param"][n_sim_p]*particle.getEndPoint()[0]
+
+                variables["sim_p_ecaly"][n_sim_p] = particle.getVertex()[1] + variables["t_param"][n_sim_p]*particle.getEndPoint()[1]
+
                 #initialize the edep per particle tracking ...
                 sim_p_id_dict[i_p] = n_sim_p
                 variables["sim_p_hcal_e"][n_sim_p] = 0.0
@@ -262,11 +277,23 @@ def process_file(ifile):
                     pi0_dict[i_p] = []
                     n_pi0 +=1
                     pi0_idx.append(i_p)
+                elif(particle.getPdgID()==211):
+                    n_pip +=1
+                elif(particle.getPdgID()==-211):
+                    n_pim +=1
+                elif(particle.getPdgID()==2112):
+                    n_prot +=1
+                elif(particle.getPdgID()==2212):
+                    n_neut +=1
 
                 n_sim_p = n_sim_p+1
             
         variables["n_sim_p"][0] = n_sim_p
         variables["n_sim_pi0"][0] = n_pi0
+        variables["n_sim_pip"][0] = n_pip
+        variables["n_sim_pim"][0] = n_pim
+        variables["n_sim_prot"][0] = n_prot
+        variables["n_sim_neut"][0] = n_neut
 
         if(n_pi0>0):
             for x in range(n_sim_p):
@@ -297,7 +324,7 @@ def process_file(ifile):
         sim_hcal_left_e_vec, total_sim_hcal_left_e, sim_hcal_left_cntrb_edep_dict, sim_hcal_left_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys(),section=4)
 
         #ecal layer weights
-        total_sim_ecal_e_lw, sim_ecal_cntrb_edep_dict_lw, sim_ecal_e_um_lw = process_sim_edeps(event.EcalSimHits_genie,sim_p_id_dict.keys(),use_layer_weights=True)
+        sim_ecal_e_vec_lw, total_sim_ecal_e_lw, sim_ecal_cntrb_edep_dict_lw, sim_ecal_e_um_lw = process_sim_edeps(event.EcalSimHits_genie,sim_p_id_dict.keys(),use_layer_weights=True)
 
         for pid, edep_sum in sim_hcal_cntrb_edep_dict.items():
             variables["sim_p_hcal_e"][sim_p_id_dict[pid]] += edep_sum
