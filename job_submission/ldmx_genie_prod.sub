@@ -1,9 +1,7 @@
 universe                = vanilla
 
 executable              = run_genie_production_apptainer.sh
-#arguments               = -n 20000 -p $(ProcId) -c 101000 -t Ti -T G18_02a_02_11b -e 8 -o /eos/user/w/wketchum/ldmx_en_samples/production_07Jan2024
-arguments               = -n 20000 -p $(ProcId) -c 102000 -t Ti -T G18_02a_02_11b -e 4 -o /eos/user/w/wketchum/ldmx_en_samples/production_07Jan2024
-#arguments               = -n 100 -p $(ProcId) -c 100000 -t Ti -T G18_02a_02_11b -e 8 -o /eos/user/w/wketchum/ldmx_en_samples/production_07Jan2024
+arguments               = -n 20000 -p $(ProcId) -c 110500 -t Ti -T G18_02a_02_11b -e 8 -o /eos/user/w/wketchum/ldmx_en_samples/production_02Aug2024
 output                  = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).out
 error                   = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).err
 log                     = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).log
@@ -16,4 +14,3 @@ request_cpus   = 1
 +JobFlavour  = "workday"
 
 queue 500
-#queue 10
