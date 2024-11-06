@@ -3,13 +3,13 @@
 #   for the development image, look at the LDMX-Software/docker repo
 ###############################################################################
 
-FROM ghcr.io/wesketchum/ldmxsw:latest
+#FROM ghcr.io/wesketchum/ldmxsw:latest
+FROM ghcr.io/wesketchum/ldmx/dev:hepmc
 
 ARG NPROC=1
-ARG LDMX_SW_DIR=./ldmx-sw
 
 # install ldmx-sw into the container at /usr/local and rebuild
-COPY $LDMX_SW_DIR /code
+COPY --from=ldmx-sw ldmx-sw /code
 RUN mkdir -p /code/build &&\
     rm -rf /code/build/* &&\
     /etc/entry.sh /code/build cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. &&\
@@ -27,6 +27,7 @@ WORKDIR /LDMX_eN_GENIE
 COPY scripts /LDMX_eN_GENIE/scripts
 COPY ldmxsw_configs /LDMX_eN_GENIE/ldmxsw_configs
 COPY analysis /LDMX_eN_GENIE/analysis
+COPY propagationMap.root /LDMX_eN_GENIE/propagationMap.root
 
 #need to make executable script executable
 RUN chmod a+x /LDMX_eN_GENIE/scripts/run_genie_sim_and_reco.sh

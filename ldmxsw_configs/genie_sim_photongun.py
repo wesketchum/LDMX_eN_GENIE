@@ -24,7 +24,7 @@ OUTPUT_FILE_NAME=arg.output
 ENERGY=arg.energy
 
 if OUTPUT_FILE_NAME is None:
-    OUTPUT_FILE_NAME= f'ldmx_genie_{TUNE}_{TARGET}_{ENERGY}GeV_{RUN}.root'
+    OUTPUT_FILE_NAME= f'ldmx_genie_{TUNE}_{TARGET}_{ENERGY}GeV_{RUN}_100MeVphotongun.root'
 
 if OUTPUT_FILE_NAME[-5:]!=".root":
     OUTPUT_FILE_NAME=OUTPUT_FILE_NAME+".root"
@@ -67,7 +67,7 @@ from LDMX.Framework import ldmxcfg
 from LDMX.SimCore import generators
 from LDMX.SimCore import simulator
 
-p=ldmxcfg.Process("genie")
+p=ldmxcfg.Process("singlephoton")
 
 import LDMX.Ecal.EcalGeometry
 import LDMX.Hcal.HcalGeometry
@@ -75,27 +75,31 @@ import LDMX.Hcal.HcalGeometry
 sim = simulator.simulator('sim')
 sim.setDetector(det_name=DET_NAME,include_scoring_planes=True)
 
-targets, abundances = get_targets(TARGET)
+myGun = generators.gun( 'myGun' )
+myGun.particle = 'gamma'
+myGun.energy = 0.1
+myGun.direction = [ 0., 0., 1. ]
+myGun.position = [ 0., 0., 0. ]
 
-genie = generators.genie(name=f'genie_{TUNE}',
-                              energy = float(ENERGY),
-                              targets = targets,
-                              target_thickness = 0.3504,
-                              abundances = abundances,
-                              time = 0.0,
-                              position = [0.,0.,0.],
-                              beam_size = [ 20., 80. ],
-                              direction = [0.,0.,1.],
-                              tune=TUNE,
-                              spline_file=f'{PATH_TO_GENIE_SPLINES}/gxspl_emode_GENIE_v3_04_00.xml',
-                              message_threshold_file=GENIE_MESSENGER_XML_FILE,
-                              verbosity=VERBOSITY)
-
-sim.generators = [ genie ]
+sim.generators = [ myGun ]
 p.sequence.append(sim)
 p.outputFiles=[OUTPUT_FILE_NAME]
 p.maxEvents = N_EVENTS
 p.run = RUN
 p.logFrequency = 1
 p.histogramFile = HIST_OUTPUT_FILE_NAME
+
+###reco parts
+import LDMX.Ecal.ecal_hardcoded_conditions
+import LDMX.Hcal.HcalGeometry
+import LDMX.Hcal.hcal_hardcoded_conditions
+import LDMX.Ecal.digi as ecal_digi
+import LDMX.Hcal.digi as hcal_digi
+
+p.sequence.extend([
+    ecal_digi.EcalDigiProducer(),
+    ecal_digi.EcalRecProducer(),
+    hcal_digi.HcalDigiProducer(),
+    hcal_digi.HcalRecProducer()
+])
 

@@ -27,6 +27,7 @@
   <priority msgstream="GCPlex">                ERROR  </priority>
   <priority msgstream="GSimFiles">             ERROR  </priority>
   <priority msgstream="MiniBooNE">             ERROR  </priority>
+  <priority msgstream="HepMC3Converter">       ERROR </priority>
 
   <priority msgstream="AhrensNCEL">            ERROR   </priority>
   <!-- EDIT: add notification for DM EL algorithm -->
