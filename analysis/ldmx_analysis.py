@@ -186,7 +186,16 @@ def process_file(ifile):
         variables["genie_dis"][0] = (variables["genie_scatter"][0]==3)
         variables["genie_res"][0] = (variables["genie_scatter"][0]==4)
         variables["genie_mec"][0] = (variables["genie_scatter"][0]==10)
-        
+
+        if hasattr(event,"genieEventWeights_genie"):
+            weights = event.genieEventWeights_genie.getWeights()
+            variables["n_weights"][0] = len(weights)
+            for i_w, w in enumerate(weights):
+                variables["weights"][i_w] = w
+        else:
+            variables["n_weights"][0] = 0
+            variables["weights"][0] = 1.0
+
         n_sim_p = 0
         sim_p_id_dict = { }
         n_pi0 = 0
@@ -311,8 +320,8 @@ def process_file(ifile):
                         variables["pi0_photon1_idx"][my_pi0_id] = pi0_dict[pi0idx][1]
                         variables["pi0_photon2_idx"][my_pi0_id] = pi0_dict[pi0idx][0]
 
-                elif((len(pi0_dict[pi0idx]))%2==1):
-                    odd_num_ph.append(event.EventHeader.getEventNumber())
+                #elif((len(pi0_dict[pi0idx]))%2==1):
+                #    odd_num_ph.append(event.EventHeader.getEventNumber())
 
         sim_hcal_e_vec, total_sim_hcal_e, sim_hcal_cntrb_edep_dict, sim_hcal_e_um = process_sim_edeps(event.HcalSimHits_genie,sim_p_id_dict.keys())
         sim_ecal_e_vec, total_sim_ecal_e, sim_ecal_cntrb_edep_dict, sim_ecal_e_um = process_sim_edeps(event.EcalSimHits_genie,sim_p_id_dict.keys())
@@ -644,7 +653,11 @@ var_dict = {
     "trig_Electron_x": ("trig_n_Electron","D"),
     "trig_Electron_y": ("trig_n_Electron","D"),
     "trig_Electron_tp": ("trig_n_Electron","D"),
-    "trig_Electron_depth": ("trig_n_Electron","D")
+    "trig_Electron_depth": ("trig_n_Electron","D"),
+
+    #reweighting
+    "n_weights": (1,"I"),
+    "weights": ("n_weights","D")
 
 }
 

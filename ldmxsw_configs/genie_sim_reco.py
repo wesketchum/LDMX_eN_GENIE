@@ -15,6 +15,7 @@ parser.add_argument('--prop_map',default='./propagationMap.root')
 parser.add_argument('--sim_only',default=False)
 parser.add_argument('--reco_only',default=False)
 
+
 arg = parser.parse_args()
 
 if arg.sim_only and arg.reco_only:
@@ -55,10 +56,10 @@ def get_targets(target_name):
     abundances = []
 
     if(target_name=='Ti'):
-        #targets = [ 1000220460, 1000220470, 1000220480, 1000220490, 1000220500 ]
-        #abundances = [ 0.0825, 0.0744, 0.7372, 0.0541, 0.0581 ]
-        targets = [ 1000220460, 1000220470, 1000220480, 1000220490 ]
-        abundances = [ 0.0825, 0.0744, 0.7372, 0.0541 ]
+        targets = [ 1000220460, 1000220470, 1000220480, 1000220490, 1000220500 ]
+        abundances = [ 0.0825, 0.0744, 0.7372, 0.0541, 0.0581 ]
+        #targets = [ 1000220460, 1000220470, 1000220480, 1000220490 ]
+        #abundances = [ 0.0825, 0.0744, 0.7372, 0.0541 ]
     elif(target_name=='W'):
         targets = [ 1000741820, 1000741830, 1000741840, 1000741860 ]
         abundances = [ 0.2650, 0.1431, 0.3064, 0.2843 ]
