@@ -1,0 +1,19 @@
+universe                = vanilla
+
+executable              = run_genie_production_apptainer.sh
+#arguments               = -n 20000 -p $(ProcId) -c 101000 -t Ti -T G18_02a_02_11b -e 8 -o /eos/user/w/wketchum/ldmx_en_samples/production_07Jan2024
+#arguments               = -n 20000 -p $(ProcId) -c 102000 -t Ti -T G18_02a_02_11b -e 4 -o /eos/user/w/wketchum/ldmx_en_samples/production_07Jan2024
+arguments               = -n 1000 -p $(ProcId) -c 100000 -t Ti -T G21_11b_00_000 -e 8 -o /eos/user/w/wketchum/ldmx_en_samples/production_06Nov2024/test
+output                  = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).out
+error                   = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).err
+log                     = logs/ldmx_genie_prod.$(ClusterId).$(ProcId).log
+
+request_cpus   = 1
+#request_memory = 2000M
+#request_disk   = 10240M
+
++MaxRuntime   = 7200
+#+JobFlavour  = "workday"
+
+#queue 500
+queue 10
