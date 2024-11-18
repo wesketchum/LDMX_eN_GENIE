@@ -15,6 +15,7 @@ parser.add_argument('--prop_map',default='./propagationMap.root')
 parser.add_argument('--sim_only',default=False)
 parser.add_argument('--reco_only',default=False)
 
+
 arg = parser.parse_args()
 
 if arg.sim_only and arg.reco_only:
