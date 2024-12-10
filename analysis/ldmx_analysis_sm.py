@@ -124,6 +124,8 @@ def pi0_photon_sorter(ecal_e_lw,hcal_e):
     else:
         return 0
 
+FILES = ['Data/ldmx_genie_output_run_101010/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101010_reco.root']
+
 #FILES = ['ldmx_genie_output_run_101010/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101010_reco.root',
 #	'ldmx_genie_output_run_101011/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101011_reco.root',
 #	'ldmx_genie_output_run_101012/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101012_reco.root',
@@ -149,52 +151,52 @@ def pi0_photon_sorter(ecal_e_lw,hcal_e):
 #	'ldmx_genie_output_run_101032/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101032_reco.root',
 #	'ldmx_genie_output_run_101034/ldmx_genie_G18_02a_02_11b_Ti_8GeV_101034_reco.root',
 
-FILES = ['ldmx_genie_G18_02a_00_000_Ti_301.root',
-    'ldmx_genie_G18_02a_00_000_Ti_315.root',
-    'ldmx_genie_G18_02a_00_000_Ti_329.root',
-    'ldmx_genie_G18_02a_00_000_Ti_302.root',
-    'ldmx_genie_G18_02a_00_000_Ti_316.root',
-    'ldmx_genie_G18_02a_00_000_Ti_330.root',
-    'ldmx_genie_G18_02a_00_000_Ti_303.root',
-    'ldmx_genie_G18_02a_00_000_Ti_317.root',
-    'ldmx_genie_G18_02a_00_000_Ti_331.root',
-    'ldmx_genie_G18_02a_00_000_Ti_304.root',
-    'ldmx_genie_G18_02a_00_000_Ti_318.root',
-    'ldmx_genie_G18_02a_00_000_Ti_332.root',
-    'ldmx_genie_G18_02a_00_000_Ti_305.root',
-    'ldmx_genie_G18_02a_00_000_Ti_319.root',
-    'ldmx_genie_G18_02a_00_000_Ti_333.root',
-    'ldmx_genie_G18_02a_00_000_Ti_306.root',
-    'ldmx_genie_G18_02a_00_000_Ti_320.root',
-    'ldmx_genie_G18_02a_00_000_Ti_334.root',
-    'ldmx_genie_G18_02a_00_000_Ti_307.root',
-    'ldmx_genie_G18_02a_00_000_Ti_321.root',
-    'ldmx_genie_G18_02a_00_000_Ti_335.root',
-    'ldmx_genie_G18_02a_00_000_Ti_308.root',
-    'ldmx_genie_G18_02a_00_000_Ti_322.root',
-    'ldmx_genie_G18_02a_00_000_Ti_336.root',
-    'ldmx_genie_G18_02a_00_000_Ti_309.root',
-    'ldmx_genie_G18_02a_00_000_Ti_323.root',
-    'ldmx_genie_G18_02a_00_000_Ti_337.root',
-    'ldmx_genie_G18_02a_00_000_Ti_310.root',
-    'ldmx_genie_G18_02a_00_000_Ti_324.root',
-    'ldmx_genie_G18_02a_00_000_Ti_338.root',
-    'ldmx_genie_G18_02a_00_000_Ti_311.root',
-    'ldmx_genie_G18_02a_00_000_Ti_325.root',
-    'ldmx_genie_G18_02a_00_000_Ti_339.root',
-    'ldmx_genie_G18_02a_00_000_Ti_312.root',
-    'ldmx_genie_G18_02a_00_000_Ti_326.root',
-    'ldmx_genie_G18_02a_00_000_Ti_340.root',
-    'ldmx_genie_G18_02a_00_000_Ti_313.root',
-    'ldmx_genie_G18_02a_00_000_Ti_327.root',
-    'ldmx_genie_G18_02a_00_000_Ti_314.root',
-    'ldmx_genie_G18_02a_00_000_Ti_328.root']
+#FILES = ['ldmx_genie_G18_02a_00_000_Ti_301.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_315.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_329.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_302.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_316.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_330.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_303.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_317.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_331.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_304.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_318.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_332.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_305.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_319.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_333.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_306.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_320.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_334.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_307.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_321.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_335.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_308.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_322.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_336.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_309.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_323.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_337.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_310.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_324.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_338.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_311.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_325.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_339.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_312.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_326.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_340.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_313.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_327.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_314.root',
+#    'ldmx_genie_G18_02a_00_000_Ti_328.root']
 
 EVENTS_TO_PROCESS = []
 
 VERBOSE = False
 
-OUTPUT_FILE = ROOT.TFile("output_file_29Aug_4GeV_400k.root","RECREATE")
+OUTPUT_FILE = ROOT.TFile("output_file_19Nov_8GeV_test.root","RECREATE")
 
 #layer weight imported
 layerWeights = [2.312, 4.312, 6.522, 7.490, 8.595, 10.253, 10.915, 10.915, 10.915, 10.915, 10.915,
@@ -339,9 +341,9 @@ var_dict = {
     "delta_py": (1,"D"),
     "delta_pz": (1,"D"),
 
-# toggle for 4GeV
-#    #recoil hits in tracker for charged particles
-#    "recoil_nhits":("n_sim_p","I"),
+# toggle off for 4GeV
+    #recoil hits in tracker for charged particles
+    "recoil_nhits":("n_sim_p","I"),
 
     #particle multiplicity
     "n_sim_prot": (1,"I"),
@@ -428,8 +430,8 @@ for f in FILES:
                 variables["sim_p_q"][n_sim_p] = particle.getCharge()
                 variables["sim_p_thetaz"][n_sim_p] = thetaz(particle)
         
-#                #initialize nhits to zero (to be looped over later)
-#                variables["recoil_nhits"][n_sim_p] = 0
+                #initialize nhits to zero (to be looped over later)
+                variables["recoil_nhits"][n_sim_p] = 0
 
                 #endpoint info
                 variables["sim_p_end_x"][n_sim_p] = particle.getEndPoint()[0]
@@ -571,16 +573,16 @@ for f in FILES:
             variables["hcal_left_e"][sim_p_id_dict[pid]] += edep_sum
             #print(sim_hcal_left_cntrb_edep_dict)
 
-# toggle for 4GeV
-#        recoil_hits_dict = recoil_nhits(event.RecoilTracks_genie,sim_p_id_dict.keys())
-#
-#        for pid, nhits in recoil_hits_dict.items():
-#            variables["recoil_nhits"][sim_p_id_dict[pid]] = nhits
-#            if(variables["recoil_nhits"][sim_p_id_dict[pid]]!=0):
-#                print(f'event is {event.EventHeader.getEventNumber()}')
-#                print(f'nhits is {variables["recoil_nhits"][sim_p_id_dict[pid]]}')
-#                print(f'particle id is {variables["sim_p_id"][sim_p_id_dict[pid]]}')
-#
+# toggle off for 4GeV
+        recoil_hits_dict = recoil_nhits(event.RecoilTracks_genie,sim_p_id_dict.keys())
+
+        for pid, nhits in recoil_hits_dict.items():
+            variables["recoil_nhits"][sim_p_id_dict[pid]] = nhits
+            if(variables["recoil_nhits"][sim_p_id_dict[pid]]!=0):
+                print(f'event is {event.EventHeader.getEventNumber()}')
+                print(f'nhits is {variables["recoil_nhits"][sim_p_id_dict[pid]]}')
+                print(f'particle id is {variables["sim_p_id"][sim_p_id_dict[pid]]}')
+
 #        n_rec_p = 0
 #        
 #        for rechit in event.RecoilTracks_genie_reco:
